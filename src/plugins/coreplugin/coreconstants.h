@@ -142,6 +142,7 @@ const char * const SPLIT_SIDE_BY_SIDE    = "QtCreator.SplitSideBySide";
 const char * const REMOVE_CURRENT_SPLIT  = "QtCreator.RemoveCurrentSplit";
 const char * const REMOVE_ALL_SPLITS     = "QtCreator.RemoveAllSplits";
 const char * const GOTO_OTHER_SPLIT      = "QtCreator.GotoOtherSplit";
+const char * const CLONE_EDITOR          = "QtCreator.CloneEditor";
 const char * const CLOSE                 = "QtCreator.Close";
 #ifdef Q_WS_WIN
 const char * const CLOSE_ALTERNATIVE     = "QtCreator.Close_Alternative"; // temporary, see QTCREATORBUG-72
