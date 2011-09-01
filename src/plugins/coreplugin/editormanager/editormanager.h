@@ -209,6 +209,7 @@ public slots:
     void closeOtherEditors();
 
 private slots:
+    void cloneEditor();
     void gotoNextDocHistory();
     void gotoPreviousDocHistory();
     void handleContextChange(Core::IContext *context);

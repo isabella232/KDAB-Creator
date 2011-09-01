@@ -43,6 +43,7 @@
 #include "mimedatabase.h"
 #include "tabpositionindicator.h"
 #include "vcsmanager.h"
+#include "cloneview.h"
 
 #include <coreplugin/actionmanager/actioncontainer.h>
 #include <coreplugin/actionmanager/actionmanager.h>
@@ -65,27 +66,28 @@
 #include <utils/consoleprocess.h>
 #include <utils/qtcassert.h>
 
-#include <QDateTime>
-#include <QDebug>
-#include <QFileInfo>
-#include <QMap>
-#include <QProcess>
-#include <QSet>
-#include <QSettings>
-#include <QTextCodec>
-#include <QTimer>
+#include <QtCore/QDateTime>
+#include <QtCore/QDebug>
+#include <QtCore/QFileInfo>
+#include <QtCore/QMap>
+#include <QtCore/QProcess>
+#include <QtCore/QSet>
+#include <QtCore/QSettings>
+#include <QtCore/QTextCodec>
+#include <QtCore/QTimer>
 
-#include <QAction>
-#include <QShortcut>
-#include <QApplication>
-#include <QFileDialog>
-#include <QLayout>
-#include <QMainWindow>
-#include <QMenu>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QSplitter>
-#include <QStackedLayout>
+#include <QtGui/QAction>
+#include <QtGui/QShortcut>
+#include <QtGui/QApplication>
+#include <QtGui/QFileDialog>
+#include <QtGui/QLayout>
+#include <QtGui/QMainWindow>
+#include <QtGui/QMenu>
+#include <QtGui/QMessageBox>
+#include <QtGui/QPushButton>
+#include <QtGui/QSplitter>
+#include <QtGui/QStackedLayout>
+#include <QtGui/QDesktopWidget>
 
 enum { debugEditorManager=0 };
 
@@ -232,6 +234,8 @@ struct EditorManagerPrivate
 
     QString m_titleAddition;
 
+    Internal::CloneView *m_clone;
+
     bool m_autoSaveEnabled;
     int m_autoSaveInterval;
 };
@@ -259,6 +263,7 @@ EditorManagerPrivate::EditorManagerPrivate(QWidget *parent) :
     m_windowPopup(0),
     m_coreListener(0),
     m_reloadSetting(IDocument::AlwaysAsk),
+    m_clone(0),
     m_autoSaveEnabled(true),
     m_autoSaveInterval(5)
 {
@@ -442,6 +447,12 @@ EditorManager::EditorManager(QWidget *parent) :
     cmd->setDefaultKeySequence(QKeySequence(tr("%1,o").arg(prefix)));
     mwindow->addAction(cmd, Constants::G_WINDOW_SPLIT);
     connect(d->m_gotoOtherSplitAction, SIGNAL(triggered()), this, SLOT(gotoOtherSplit()));
+
+    QAction *cloneAction = new QAction(tr("Clone editor"), this);
+    cmd = am->registerAction(cloneAction, Constants::CLONE_EDITOR, editManagerContext);
+    cmd->setDefaultKeySequence(QKeySequence(tr("%1,c").arg(prefix)));
+    mwindow->addAction(cmd, Constants::G_WINDOW_SPLIT);
+    connect(cloneAction, SIGNAL(triggered()), this, SLOT(cloneEditor()));
 
     ActionContainer *medit = am->actionContainer(Constants::M_EDIT);
     ActionContainer *advancedMenu = am->createMenu(Constants::M_EDIT_ADVANCED);
@@ -2233,4 +2244,19 @@ void EditorManager::updateVariable(const QByteArray &variable)
             value = QString::number(curEditor->widget()->mapToGlobal(QPoint(0,0)).y());
         VariableManager::instance()->insert(variable, value);
     }
+}
+
+void Core::EditorManager::cloneEditor()
+{
+    if (!d->m_clone) {
+        d->m_clone = new CloneView(this);
+        QDesktopWidget* desktop = qApp->desktop();
+        if ( desktop->numScreens() > 1 )
+            d->m_clone->move( desktop->screenGeometry( desktop->primaryScreen() == 0 ? 1 : 0 ).topLeft() );
+        d->m_clone->showMaximized();
+    }
+    else {
+        d->m_clone->show();
+    }
+    d->m_clone->raise();
 }
