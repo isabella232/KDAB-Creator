@@ -1674,3 +1674,36 @@ TextEditor::IAssistInterface *QmlJSTextEditorWidget::createAssistInterface(
     }
     return 0;
 }
+
+QString QmlJSEditor::QmlJSTextEditorWidget::foldReplacementText(const QTextBlock &block) const
+{
+    const int curlyIndex = block.text().indexOf(QLatin1Char('{'));
+
+    if (curlyIndex != -1 && m_semanticInfo.isValid()) {
+        const int pos = block.position() + curlyIndex;
+        Node *node = m_semanticInfo.rangeAt(pos);
+
+        if (node)  {
+            UiObjectInitializer *objectInitializer = 0;
+            if (UiObjectDefinition *def = cast<UiObjectDefinition *>(node))
+                objectInitializer = def->initializer;
+            else if (UiObjectBinding *binding = cast<UiObjectBinding *>(node))
+                objectInitializer = binding->initializer;
+
+            // Get the id value, if it exists
+            if (objectInitializer) {
+                for (UiObjectMemberList *it = objectInitializer->members; it; it = it->next) {
+                    if (UiObjectMember *member = it->member) {
+                        UiScriptBinding *binding = cast<UiScriptBinding *>(member);
+                        if (binding && binding->qualifiedId->name == QLatin1String("id")) {
+                            if (ExpressionStatement *e = cast<ExpressionStatement*>(binding->statement))
+                                if (IdentifierExpression *i = cast<IdentifierExpression*>(e->expression))
+                                    return QLatin1String("id: ") + i->name + QLatin1String("...");
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return TextEditor::BaseTextEditorWidget::foldReplacementText(block);
+}
