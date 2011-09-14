@@ -1621,3 +1621,41 @@ TextEditor::IAssistInterface *QmlJSTextEditorWidget::createAssistInterface(
     }
     return 0;
 }
+
+QString QmlJSEditor::QmlJSTextEditorWidget::foldReplacementText(const QTextBlock &block) const
+{
+    if (!block.text().indexOf('{') == -1 || !m_semanticInfo.isValid())
+        return TextEditor::BaseTextEditorWidget::foldReplacementText(block);
+
+    int pos = block.position()+block.text().indexOf('{');
+
+    Node *node = m_semanticInfo.declaringMember(pos);
+
+    if (node)  {
+        // Check that the node is in the block
+        UiObjectMember *objectMember = node->uiObjectMemberCast();
+        if (!objectMember || qualifiedTypeNameId(objectMember)->identifierToken.begin() < block.position())
+            return TextEditor::BaseTextEditorWidget::foldReplacementText(block);
+
+        UiObjectInitializer *objectInitializer = 0;
+        if (UiObjectDefinition *def = cast<UiObjectDefinition *>(node))
+            objectInitializer = def->initializer;
+        else if (UiObjectBinding *binding = cast<UiObjectBinding *>(node))
+            objectInitializer = binding->initializer;
+
+        // Get the id value, if it exists
+        if (objectInitializer) {
+            for (UiObjectMemberList *it = objectInitializer->members; it; it = it->next) {
+                if (UiObjectMember *member = it->member) {
+                    UiScriptBinding *binding = cast<UiScriptBinding *>(member);
+                    if (binding && binding->qualifiedId->name->asString() == QLatin1String("id")) {
+                        if (ExpressionStatement *e = cast<ExpressionStatement*>(binding->statement))
+                            if (IdentifierExpression *i = cast<IdentifierExpression*>(e->expression))
+                                return QLatin1String("id: ") + i->name->asString() + QLatin1String("...");
+                    }
+                }
+            }
+        }
+    }
+    return TextEditor::BaseTextEditorWidget::foldReplacementText(block);
+}

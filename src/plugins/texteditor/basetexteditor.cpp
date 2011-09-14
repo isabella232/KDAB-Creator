@@ -2588,9 +2588,12 @@ QTextBlock BaseTextEditorWidget::foldedBlockAt(const QPoint &pos, QRect *box) co
                 QRectF lineRect = line.naturalTextRect().translated(offset.x(), top);
                 lineRect.adjust(0, 0, -1, -1);
 
+                QString replacement = QLatin1String(" {") + foldReplacementText(block)
+                        + QLatin1String("}; ");
+
                 QRectF collapseRect(lineRect.right() + 12,
                                     lineRect.top(),
-                                    fontMetrics().width(QLatin1String(" {...}; ")),
+                                    fontMetrics().width(replacement),
                                     lineRect.height());
                 if (collapseRect.contains(pos)) {
                     QTextBlock result = block;
@@ -3384,17 +3387,18 @@ void BaseTextEditorWidget::paintEvent(QPaintEvent *e)
                 QRectF lineRect = line.naturalTextRect().translated(offset.x(), top);
                 lineRect.adjust(0, 0, -1, -1);
 
+                QString replacement = foldReplacementText(block);
+                QString rectReplacement = QLatin1String(" {") + replacement + QLatin1String("}; ");
+
                 QRectF collapseRect(lineRect.right() + 12,
                                     lineRect.top(),
-                                    fontMetrics().width(QLatin1String(" {...}; ")),
+                                    fontMetrics().width(rectReplacement),
                                     lineRect.height());
                 painter.setRenderHint(QPainter::Antialiasing, true);
                 painter.translate(.5, .5);
                 painter.drawRoundedRect(collapseRect.adjusted(0, 0, 0, -1), 3, 3);
                 painter.setRenderHint(QPainter::Antialiasing, false);
                 painter.translate(-.5, -.5);
-
-                QString replacement = QLatin1String("...");
 
                 if (TextBlockUserData *nextBlockUserData = BaseTextDocumentLayout::testUserData(nextBlock)) {
                     if (nextBlockUserData->foldingStartIncluded())
@@ -6226,4 +6230,9 @@ IAssistInterface *BaseTextEditorWidget::createAssistInterface(AssistKind kind,
 {
     Q_UNUSED(kind);
     return new DefaultAssistInterface(document(), position(), d->m_document, reason);
+}
+
+QString TextEditor::BaseTextEditorWidget::foldReplacementText(const QTextBlock &) const
+{
+    return QLatin1String("...");
 }
