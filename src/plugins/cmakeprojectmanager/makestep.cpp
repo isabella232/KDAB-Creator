@@ -199,6 +199,11 @@ void MakeStep::setBuildTarget(const QString &buildTarget, bool on)
     m_buildTargets = old;
 }
 
+void MakeStep::clearBuildTargets()
+{
+    m_buildTargets.clear();
+}
+
 QString MakeStep::additionalArguments() const
 {
     return m_additionalArguments;

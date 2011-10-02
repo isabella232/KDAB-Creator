@@ -68,6 +68,7 @@ public:
     virtual bool immutable() const;
     bool buildsBuildTarget(const QString &target) const;
     void setBuildTarget(const QString &target, bool on);
+    void clearBuildTargets();
     QString additionalArguments() const;
     void setAdditionalArguments(const QString &list);
 
@@ -75,11 +76,11 @@ public:
 
     QVariantMap toMap() const;
 
+    bool fromMap(const QVariantMap &map);
+
 protected:
     MakeStep(ProjectExplorer::BuildStepList *bsl, MakeStep *bs);
     MakeStep(ProjectExplorer::BuildStepList *bsl, const QString &id);
-
-    bool fromMap(const QVariantMap &map);
 
     // For parsing [ 76%]
     virtual void stdOutput(const QString &line);
