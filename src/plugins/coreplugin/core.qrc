@@ -65,6 +65,7 @@
         <file>images/category_cpp.png</file>
         <file>images/category_vcs.png</file>
         <file>images/category_qml.png</file>
-	<file>images/filtericon.png</file>
+        <file>images/filtericon.png</file>
+        <file>images/kdablogo160.png</file>
     </qresource>
 </RCC>

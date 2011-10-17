@@ -2,6 +2,7 @@
 QTCREATOR_PRI_INCLUDED = 1
 
 QTCREATOR_VERSION = 2.3.1
+KDABCREATOR_VERSION = 0
 
 defineReplace(cleanPath) {
     win32:1 ~= s|\\\\|/|g

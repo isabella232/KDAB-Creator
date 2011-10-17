@@ -163,6 +163,7 @@ private slots:
     void setFocusToEditor();
     void saveAll();
     void aboutQtCreator();
+    void aboutKDAB();
     void aboutPlugins();
     void updateFocusWidget(QWidget *old, QWidget *now);
     void setSidebarVisible(bool visible);

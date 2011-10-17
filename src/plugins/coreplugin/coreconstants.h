@@ -155,6 +155,7 @@ const char * const GOTOPREVINHISTORY     = "QtCreator.GotoPreviousInHistory";
 const char * const GO_BACK               = "QtCreator.GoBack";
 const char * const GO_FORWARD            = "QtCreator.GoForward";
 const char * const ABOUT_QTCREATOR       = "QtCreator.AboutQtCreator";
+const char * const ABOUT_KDAB            = "QtCreator.AboutKDAB";
 const char * const ABOUT_PLUGINS         = "QtCreator.AboutPlugins";
 const char * const S_RETURNTOEDITOR      = "QtCreator.ReturnToEditor";
 
