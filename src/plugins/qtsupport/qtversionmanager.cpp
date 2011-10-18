@@ -721,8 +721,10 @@ QString QtVersionManager::findQMakeBinaryFromMakefile(const QString &makefile)
 
 BaseQtVersion *QtVersionManager::qtVersionForQMakeBinary(const QString &qmakePath)
 {
+   QFileInfo qmakeFi(qmakePath);
    foreach (BaseQtVersion *version, versions()) {
-       if (version->qmakeCommand() == qmakePath) {
+       QFileInfo versionFi(version->qmakeCommand());
+       if (versionFi == qmakeFi) {
            return version;
            break;
        }
