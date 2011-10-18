@@ -44,7 +44,8 @@ SUBDIRS   = plugin_coreplugin \
             debugger/dumper.pro \
             plugin_qmlprofiler \
             plugin_remotelinux \
-            plugin_valgrind
+            plugin_valgrind \
+            plugin_gammaray
 
 linux-* {
      SUBDIRS += debugger/ptracepreload.pro
@@ -288,3 +289,7 @@ plugin_macros.depends = plugin_texteditor
 plugin_macros.depends += plugin_find
 plugin_macros.depends += plugin_locator
 plugin_macros.depends += plugin_coreplugin
+
+plugin_gammaray.subdir = gammaray
+plugin_gammaray.depends = plugin_analyzerbase
+plugin_gammaray.depends += plugin_coreplugin
