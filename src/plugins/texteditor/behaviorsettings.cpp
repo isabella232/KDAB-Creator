@@ -39,13 +39,15 @@
 
 static const char mouseNavigationKey[] = "MouseNavigation";
 static const char scrollWheelZoomingKey[] = "ScrollWheelZooming";
+static const char camelCaseNavigationKey[] = "CamelCaseNavigation";
 static const char groupPostfix[] = "BehaviorSettings";
 
 namespace TextEditor {
 
 BehaviorSettings::BehaviorSettings() :
     m_mouseNavigation(true),
-    m_scrollWheelZooming(true)
+    m_scrollWheelZooming(true),
+    m_camelCaseNavigation(true)
 {
 }
 
@@ -64,6 +66,7 @@ void BehaviorSettings::toMap(const QString &prefix, QVariantMap *map) const
 {
     map->insert(prefix + QLatin1String(mouseNavigationKey), m_mouseNavigation);
     map->insert(prefix + QLatin1String(scrollWheelZoomingKey), m_scrollWheelZooming);
+    map->insert(prefix + QLatin1String(camelCaseNavigationKey), m_camelCaseNavigation);
 }
 
 void BehaviorSettings::fromMap(const QString &prefix, const QVariantMap &map)
@@ -72,12 +75,15 @@ void BehaviorSettings::fromMap(const QString &prefix, const QVariantMap &map)
         map.value(prefix + QLatin1String(mouseNavigationKey), m_mouseNavigation).toBool();
     m_scrollWheelZooming =
         map.value(prefix + QLatin1String(scrollWheelZoomingKey), m_scrollWheelZooming).toBool();
+    m_camelCaseNavigation =
+        map.value(prefix + QLatin1String(camelCaseNavigationKey), m_camelCaseNavigation).toBool();
 }
 
 bool BehaviorSettings::equals(const BehaviorSettings &ds) const
 {
     return m_mouseNavigation == ds.m_mouseNavigation
         && m_scrollWheelZooming == ds.m_scrollWheelZooming
+        && m_camelCaseNavigation == ds.m_camelCaseNavigation
         ;
 }
 

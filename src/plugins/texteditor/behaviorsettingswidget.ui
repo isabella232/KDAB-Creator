@@ -184,7 +184,7 @@
    <item row="2" column="1">
     <widget class="QGroupBox" name="groupBoxMouse">
      <property name="title">
-      <string>Mouse</string>
+      <string>Mouse and Keayboard</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
@@ -198,6 +198,13 @@
        <widget class="QCheckBox" name="scrollWheelZooming">
         <property name="text">
          <string>Enable scroll &amp;wheel zooming</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="camelCaseNavigation">
+        <property name="text">
+         <string>Enable built-in camel case &amp;navigation</string>
         </property>
        </widget>
       </item>

@@ -203,6 +203,9 @@ public:
     void setScrollWheelZoomingEnabled(bool b);
     bool scrollWheelZoomingEnabled() const;
 
+    void setCamelCaseNavigationEnabled(bool b);
+    bool camelCaseNavigationEnabled() const;
+
     void setRevisionsVisible(bool b);
     bool revisionsVisible() const;
 
