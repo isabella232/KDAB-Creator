@@ -97,7 +97,7 @@ QWidget *DisplaySettingsPage::createPage(QWidget *parent)
           << ' ' << m_d->m_page->animateMatchingParentheses->text()
           << ' ' << m_d->m_page->enableTextWrapping->text()
           << ' ' << m_d->m_page->autoFoldFirstComment->text()
-          << ' ' << m_d->m_page->centerOnScroll->text();
+          << ' ' << m_d->m_page->centerCursorText->text();
         m_d->m_searchKeywords.remove(QLatin1Char('&'));
     }
     return w;
@@ -134,7 +134,7 @@ void DisplaySettingsPage::settingsFromUI(DisplaySettings &displaySettings) const
     displaySettings.m_animateMatchingParentheses = m_d->m_page->animateMatchingParentheses->isChecked();
     displaySettings.m_markTextChanges = m_d->m_page->markTextChanges->isChecked();
     displaySettings.m_autoFoldFirstComment = m_d->m_page->autoFoldFirstComment->isChecked();
-    displaySettings.m_centerCursorOnScroll = m_d->m_page->centerOnScroll->isChecked();
+    displaySettings.m_centerCursor = m_d->m_page->centerCursor->currentIndex();
 }
 
 void DisplaySettingsPage::settingsToUI()
@@ -151,7 +151,7 @@ void DisplaySettingsPage::settingsToUI()
     m_d->m_page->animateMatchingParentheses->setChecked(displaySettings.m_animateMatchingParentheses);
     m_d->m_page->markTextChanges->setChecked(displaySettings.m_markTextChanges);
     m_d->m_page->autoFoldFirstComment->setChecked(displaySettings.m_autoFoldFirstComment);
-    m_d->m_page->centerOnScroll->setChecked(displaySettings.m_centerCursorOnScroll);
+    m_d->m_page->centerCursor->setCurrentIndex(displaySettings.m_centerCursor);
 }
 
 const DisplaySettings &DisplaySettingsPage::displaySettings() const

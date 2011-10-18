@@ -300,6 +300,8 @@ public:
 
     QScopedPointer<AutoCompleter> m_autoCompleter;
     QScopedPointer<Indenter> m_indenter;
+
+    bool m_centerCursor;
 };
 
 } // namespace Internal
