@@ -25,7 +25,8 @@ HEADERS += \
     profilereader.h \
     qtparser.h \
     gettingstartedwelcomepage.h \
-    exampleslistmodel.h
+    exampleslistmodel.h \
+    gammaraytool.h
 
 SOURCES += \
     qtsupportplugin.cpp \
@@ -41,7 +42,8 @@ SOURCES += \
     profilereader.cpp \
     qtparser.cpp \
     gettingstartedwelcomepage.cpp \
-    exampleslistmodel.cpp
+    exampleslistmodel.cpp \
+    gammaraytool.cpp
 
 FORMS   +=  \
     showbuildlog.ui \
@@ -51,4 +53,6 @@ FORMS   +=  \
 
 
 DEFINES += QT_NO_CAST_TO_ASCII
+
+
 

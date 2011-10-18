@@ -38,7 +38,8 @@ DATA_DIRS = \
     qml \
     qml-type-descriptions \
     generic-highlighter \
-    glsl
+    glsl \
+    gammaray
 macx: DATA_DIRS += scripts
 
 # conditionally deployed data

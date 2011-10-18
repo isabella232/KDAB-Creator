@@ -41,6 +41,7 @@
 #include "qmldumptool.h"
 #include "qmldebugginglibrary.h"
 #include "qmlobservertool.h"
+#include "gammaraytool.h"
 
 #include <coreplugin/icore.h>
 #include <coreplugin/progressmanager/progressmanager.h>
@@ -202,6 +203,8 @@ QtOptionsPageWidget::QtOptionsPageWidget(QWidget *parent, QList<BaseQtVersion *>
             this, SLOT(buildQmlDebuggingLibrary()));
     connect(m_debuggingHelperUi->qmlObserverBuildButton, SIGNAL(clicked()),
             this, SLOT(buildQmlObserver()));
+    connect(m_debuggingHelperUi->gammarayBuildButton, SIGNAL(clicked()),
+            this, SLOT(buildGammaray()));
 
     connect(m_debuggingHelperUi->showLogButton, SIGNAL(clicked()),
             this, SLOT(slotShowDebuggingBuildLog()));
@@ -290,6 +293,8 @@ void QtOptionsPageWidget::debuggingHelperBuildFinished(int qtVersionId, const QS
         success &= version->hasQmlDump();
     if (tools & DebuggingHelperBuildTask::QmlObserver)
         success &= version->hasQmlObserver();
+    if (tools & DebuggingHelperBuildTask::GammaRay)
+        success &= version->hasGammaray();
 
     if (!success)
         showDebuggingBuildLog(item);
@@ -515,6 +520,11 @@ void QtOptionsPageWidget::buildQmlObserver()
     buildDebuggingHelper(qmlDbgTools);
 }
 
+void QtOptionsPageWidget::buildGammaray()
+{
+    buildDebuggingHelper(DebuggingHelperBuildTask::GammaRay);
+}
+
 // Non-modal dialog
 class BuildLogDialog : public QDialog {
 public:
@@ -674,17 +684,20 @@ void QtOptionsPageWidget::updateDebuggingHelperUi()
         const bool canBuildQmlDumper = availableTools & DebuggingHelperBuildTask::QmlDump;
         const bool canBuildQmlDebuggingLib = availableTools & DebuggingHelperBuildTask::QmlDebugging;
         const bool canBuildQmlObserver = availableTools & DebuggingHelperBuildTask::QmlObserver;
+        const bool canBuildGammaRay = availableTools & DebuggingHelperBuildTask::GammaRay;
 
         const bool hasGdbHelper = !version->gdbDebuggingHelperLibrary().isEmpty();
         const bool hasQmlDumper = version->hasQmlDump();
         const bool hasQmlDebuggingLib = version->hasQmlDebuggingLibrary();
         const bool needsQmlDebuggingLib = version->needsQmlDebuggingLibrary();
         const bool hasQmlObserver = !version->qmlObserverTool().isEmpty();
+        const bool hasGammaray = version->hasGammaray();
 
         bool isBuildingGdbHelper = false;
         bool isBuildingQmlDumper = false;
         bool isBuildingQmlDebuggingLib = false;
         bool isBuildingQmlObserver = false;
+        bool isBuildingGammaRay = false;
 
         if (currentItem) {
             DebuggingHelperBuildTask::Tools buildingTools
@@ -693,6 +706,7 @@ void QtOptionsPageWidget::updateDebuggingHelperUi()
             isBuildingQmlDumper = buildingTools & DebuggingHelperBuildTask::QmlDump;
             isBuildingQmlDebuggingLib = buildingTools & DebuggingHelperBuildTask::QmlDebugging;
             isBuildingQmlObserver = buildingTools & DebuggingHelperBuildTask::QmlObserver;
+            isBuildingGammaRay = buildingTools & DebuggingHelperBuildTask::GammaRay;
         }
 
         // get names of tools from labels
@@ -705,6 +719,8 @@ void QtOptionsPageWidget::updateDebuggingHelperUi()
             helperNames << m_debuggingHelperUi->qmlDebuggingLibLabel->text().remove(':');
         if (hasQmlObserver)
             helperNames << m_debuggingHelperUi->qmlObserverLabel->text().remove(':');
+        if (hasGammaray)
+            helperNames << m_debuggingHelperUi->gammarayLabel->text().remove(':');
 
         QString status;
         if (helperNames.isEmpty()) {
@@ -810,6 +826,24 @@ void QtOptionsPageWidget::updateDebuggingHelperUi()
         m_debuggingHelperUi->qmlObserverStatus->setToolTip(qmlObserverToolTip);
         m_debuggingHelperUi->qmlObserverBuildButton->setEnabled(canBuildQmlObserver
                                                                 & !isBuildingQmlObserver);
+
+        QString gammarayStatusText, gammarayStatusToolTip;
+        Qt::TextInteractionFlags gammarayStatusTextFlags = Qt::NoTextInteraction;
+        if (hasGammaray) {
+            gammarayStatusText = QDir::toNativeSeparators(version->gammarayTool());
+            gammarayStatusTextFlags = Qt::TextSelectableByMouse;
+        } else {
+            if (canBuildGammaRay) {
+                gammarayStatusText = tr("<i>Not yet built.</i>");
+            } else {
+                gammarayStatusText = tr("<i>Cannot be compiled.</i>");
+                GammarayTool::canBuild(version, &gammarayStatusToolTip);
+            }
+        }
+        m_debuggingHelperUi->gammarayStatus->setText(gammarayStatusText);
+        m_debuggingHelperUi->gammarayStatus->setTextInteractionFlags(gammarayStatusTextFlags);
+        m_debuggingHelperUi->gammarayStatus->setToolTip(gammarayStatusToolTip);
+        m_debuggingHelperUi->gammarayBuildButton->setEnabled(canBuildGammaRay & !isBuildingGammaRay);
 
         QList<ProjectExplorer::ToolChain*> toolchains = toolChains(currentVersion());
         QString selectedToolChainId = currentItem->data(0, ToolChainIdRole).toString();
@@ -1027,3 +1061,4 @@ QString QtOptionsPageWidget::searchKeywords() const
     rc.remove(QLatin1Char('&'));
     return rc;
 }
+

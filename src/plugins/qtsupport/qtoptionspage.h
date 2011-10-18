@@ -110,6 +110,7 @@ private slots:
     void buildQmlDump();
     void buildQmlDebuggingLibrary();
     void buildQmlObserver();
+    void buildGammaray();
     void slotShowDebuggingBuildLog();
     void debuggingHelperBuildFinished(int qtVersionId, const QString &output,
                                       DebuggingHelperBuildTask::Tools tools);

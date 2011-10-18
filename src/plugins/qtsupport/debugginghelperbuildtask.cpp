@@ -34,6 +34,7 @@
 #include "qmldumptool.h"
 #include "qmlobservertool.h"
 #include "qmldebugginglibrary.h"
+#include "gammaraytool.h"
 #include "baseqtversion.h"
 #include "qtversionmanager.h"
 #include <coreplugin/messagemanager.h>
@@ -138,6 +139,9 @@ DebuggingHelperBuildTask::Tools DebuggingHelperBuildTask::availableTools(const B
         if (QmlObserverTool::canBuild(version))
             tools |= QmlObserver; // requires QML debugging.
     }
+    if (GammarayTool::canBuild(version)) {
+        tools |= GammaRay;
+    }
     return tools;
 }
 
@@ -148,7 +152,7 @@ void DebuggingHelperBuildTask::showOutputOnError(bool show)
 
 void DebuggingHelperBuildTask::run(QFutureInterface<void> &future)
 {
-    future.setProgressRange(0, 5);
+    future.setProgressRange(0, 6);
     future.setProgressValue(1);
 
     if (m_invalidQt || !buildDebuggingHelper(future)) {
@@ -247,6 +251,19 @@ bool DebuggingHelperBuildTask::buildDebuggingHelper(QFutureInterface<void> &futu
         }
     }
     future.setProgressValue(5);
+    if (m_tools & GammaRay) {
+        QString output, error;
+        bool success = true;
+
+        arguments.directory = GammarayTool::copy(m_qtInstallData, &error);
+        if (arguments.directory.isEmpty()
+                || !GammarayTool::build(arguments, &output, &error))
+            success = false;
+        log(output, error);
+        if (!success)
+            return false;
+    }
+    future.setProgressValue(6);
     return true;
 }
 

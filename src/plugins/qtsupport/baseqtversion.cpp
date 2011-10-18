@@ -34,6 +34,7 @@
 #include "qmlobservertool.h"
 #include "qmldumptool.h"
 #include "qmldebugginglibrary.h"
+#include "gammaraytool.h"
 
 #include "qtversionmanager.h"
 #include "profilereader.h"
@@ -168,6 +169,7 @@ BaseQtVersion::BaseQtVersion(const QString &qmakeCommand, bool isAutodetected, c
       m_hasQmlDump(false),
       m_hasQmlDebuggingLibrary(false),
       m_hasQmlObserver(false),
+      m_hasGammaray(false),
       m_mkspecUpToDate(false),
       m_mkspecReadUpToDate(false),
       m_defaultConfigIsDebug(true),
@@ -189,6 +191,7 @@ BaseQtVersion::BaseQtVersion()
     m_hasQmlDump(false),
     m_hasQmlDebuggingLibrary(false),
     m_hasQmlObserver(false),
+    m_hasGammaray(false),
     m_mkspecUpToDate(false),
     m_mkspecReadUpToDate(false),
     m_defaultConfigIsDebug(true),
@@ -699,6 +702,7 @@ void BaseQtVersion::updateVersionInfo() const
     m_hasQmlDump = false;
     m_hasQmlDebuggingLibrary = false;
     m_hasQmlObserver = false;
+    m_hasGammaray = false;
 
     if (!queryQMakeVariables(qmakeCommand(), &m_versionInfo, &m_qmakeIsExecutable))
         return;
@@ -717,6 +721,7 @@ void BaseQtVersion::updateVersionInfo() const
                     = !QmlDebuggingLibrary::libraryByInstallData(qtInstallData, false).isEmpty()
                 || !QmlDebuggingLibrary::libraryByInstallData(qtInstallData, true).isEmpty();
             m_hasQmlObserver = !QmlObserverTool::toolByInstallData(qtInstallData).isEmpty();
+            m_hasGammaray = !GammarayTool::toolByInstallData(qtInstallData).isEmpty();
         }
     }
 
@@ -847,6 +852,12 @@ bool BaseQtVersion::hasQmlObserver() const
     return m_hasQmlObserver;
 }
 
+bool BaseQtVersion::hasGammaray() const
+{
+    updateVersionInfo();
+    return m_hasGammaray;
+}
+
 Utils::Environment BaseQtVersion::qmlToolsEnvironment() const
 {
     // FIXME: This seems broken!
@@ -893,6 +904,14 @@ QString BaseQtVersion::qmlObserverTool() const
     if (qtInstallData.isEmpty())
         return QString();
     return QmlObserverTool::toolByInstallData(qtInstallData);
+}
+
+QString BaseQtVersion::gammarayTool() const
+{
+    QString qtInstallData = versionInfo().value("QT_INSTALL_DATA");
+    if (qtInstallData.isEmpty())
+        return QString();
+    return GammarayTool::toolByInstallData(qtInstallData);
 }
 
 QStringList BaseQtVersion::debuggingHelperLibraryLocations() const

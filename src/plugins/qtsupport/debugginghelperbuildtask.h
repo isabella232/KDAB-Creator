@@ -53,7 +53,8 @@ public:
         QmlDebugging = 0x02,
         QmlObserver = 0x04,
         QmlDump = 0x08,
-        AllTools = GdbDebugging | QmlDebugging | QmlObserver | QmlDump
+        GammaRay = 0x10,
+        AllTools = GdbDebugging | QmlDebugging | QmlObserver | QmlDump | GammaRay
     };
     Q_DECLARE_FLAGS(Tools, DebuggingHelper)
 

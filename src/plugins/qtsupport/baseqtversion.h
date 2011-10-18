@@ -188,6 +188,7 @@ public:
     virtual QString qmlDebuggingHelperLibrary(bool debugVersion) const;
     virtual QString qmlDumpTool(bool debugVersion) const;
     virtual QString qmlObserverTool() const;
+    virtual QString gammarayTool() const;
     virtual QStringList debuggingHelperLibraryLocations() const;
 
     virtual bool hasGdbDebuggingHelper() const;
@@ -195,6 +196,7 @@ public:
     virtual bool hasQmlDebuggingLibrary() const;
     virtual bool needsQmlDebuggingLibrary() const;
     virtual bool hasQmlObserver() const;
+    virtual bool hasGammaray() const;
     Utils::Environment qmlToolsEnvironment() const;
 
     virtual QtConfigWidget *createConfigurationWidget() const;
@@ -235,6 +237,7 @@ private:
     mutable bool m_hasQmlDump;         // controlled by m_versionInfoUpToDate
     mutable bool m_hasQmlDebuggingLibrary; // controlled by m_versionInfoUpdate
     mutable bool m_hasQmlObserver;     // controlled by m_versionInfoUpToDate
+    mutable bool m_hasGammaray;
 
     mutable bool m_mkspecUpToDate;
     mutable QString m_mkspec;
