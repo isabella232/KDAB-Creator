@@ -1,3 +1,15 @@
+KDAB Creator
+===========
+KDAB Creator is a specific version of Qt Creator with additional patches used at KDAB.
+It comes with a specific version of gammaray for Qt Creator, that you can install
+using an helper (like the qmldebugger).
+This version is using git submodule, so after cloning KDAB Creator, in the repository:
+git submodule init
+git submodule update
+
+You can find the original Qt Creator code here:
+http://qt-project.org
+
 Qt Creator
 ==========
 Qt Creator is a cross-platform C++ IDE for development with the Qt framework.
