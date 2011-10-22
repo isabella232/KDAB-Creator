@@ -1,3 +1,10 @@
+KDAB Creator
+===========
+KDAB Creator is a specific version of Qt Creator with additional patches used at KDAB.
+
+You can find the original Qt Creator code here:
+http://qt-project.org
+
 Qt Creator
 ==========
 Qt Creator is a cross-platform C++ IDE for development with the Qt framework.
