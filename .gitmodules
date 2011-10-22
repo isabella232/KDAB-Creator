@@ -1,0 +1,3 @@
+[submodule "share/qtcreator/gammaray"]
+	path = share/qtcreator/gammaray
+	url = git://github.com/KDAB/GammaRay.git
