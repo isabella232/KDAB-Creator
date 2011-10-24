@@ -492,6 +492,36 @@ private:
 
 class AddBracesToSomeOpBase: public CppQuickFixFactory
 {
+
+protected:
+    class Operation: public CppQuickFixOperation
+    {
+    public:
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, StatementAST *statement)
+            : CppQuickFixOperation(interface, priority)
+            , _statement(statement)
+        {
+            setDescription(QApplication::translate("CppTools::QuickFix",
+                                                   "Add Curly Braces"));
+        }
+
+        virtual void performChanges(CppRefactoringFile *currentFile, CppRefactoringChanges *)
+        {
+            ChangeSet changes;
+
+            const int start = currentFile->endOf(_statement->firstToken() - 1);
+            changes.insert(start, QLatin1String(" {"));
+
+            const int end = currentFile->endOf(_statement->lastToken() - 1);
+            changes.insert(end, "\n}");
+
+            currentFile->change(changes);
+            currentFile->indent(Utils::ChangeSet::Range(start, end));
+        }
+
+    private:
+        StatementAST *_statement;
+    };
 };
 
 /*
@@ -538,36 +568,6 @@ public:
 
         return noResult();
     }
-
-private:
-    class Operation: public CppQuickFixOperation
-    {
-    public:
-        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, StatementAST *statement)
-            : CppQuickFixOperation(interface, priority)
-            , _statement(statement)
-        {
-            setDescription(QApplication::translate("CppTools::QuickFix",
-                                                   "Add Curly Braces"));
-        }
-
-        virtual void performChanges(CppRefactoringFile *currentFile, CppRefactoringChanges *)
-        {
-            ChangeSet changes;
-
-            const int start = currentFile->endOf(_statement->firstToken() - 1);
-            changes.insert(start, QLatin1String(" {"));
-
-            const int end = currentFile->endOf(_statement->lastToken() - 1);
-            changes.insert(end, "\n}");
-
-            currentFile->change(changes);
-            currentFile->indent(Utils::ChangeSet::Range(start, end));
-        }
-
-    private:
-        StatementAST *_statement;
-    };
 };
 
 /*
