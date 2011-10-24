@@ -1338,6 +1338,24 @@
     \endcode
             \i if
         \row
+            \i Remove Curly Braces
+            \i Removes curly braces from an if statement that contains a
+            compound statement with one statement. For example, rewrites
+
+    \code
+    if (a) {
+        b;
+    }
+    \endcode
+
+            as
+
+    \code
+    if (a)
+        b;
+    \endcode
+            \i if
+        \row
             \i Move Declaration out of Condition
             \i Moves a declaration out of an if or while condition to simplify the
             condition. For example, rewrites
