@@ -635,8 +635,21 @@ private:
             const int lbraceEnd = currentFile->endOf(body->lbrace_token);
             changes.remove(lbraceStart,lbraceEnd);
 
-            const int rbraceStart = currentFile->endOf( body->statement_list->lastToken() - 1 );
-            const int rbraceEnd = currentFile->endOf(body->rbrace_token);
+            int rbraceStart;
+            int rbraceEnd;
+
+            // ### (marc) this is a bit of a hack: what we really want is to
+            // remove the line the } was on iff nothing else is on that line.
+            // But I don't know how to code that. So I'm only handling the
+            // important case of an 'else' following the }.
+
+            if ( _statement->else_token ) {
+                rbraceStart = currentFile->startOf(body->rbrace_token);
+                rbraceEnd = currentFile->startOf( _statement->else_token );
+            } else {
+                rbraceStart = currentFile->endOf( body->statement_list->lastToken() - 1 );
+                rbraceEnd = currentFile->endOf(body->rbrace_token);
+            }
             changes.remove(rbraceStart,rbraceEnd);
 
             currentFile->change(changes);
