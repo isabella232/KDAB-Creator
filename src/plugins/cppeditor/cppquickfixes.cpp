@@ -490,6 +490,10 @@ private:
     };
 };
 
+class AddBracesToSomeOpBase: public CppQuickFixFactory
+{
+};
+
 /*
     Add curly braces to a if statement that doesn't already contain a
     compound statement. I.e.
@@ -503,7 +507,7 @@ private:
 
     Activates on: the if
 */
-class AddBracesToIfOp: public CppQuickFixFactory
+class AddBracesToIfOp: public AddBracesToSomeOpBase
 {
 public:
     virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
