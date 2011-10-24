@@ -567,6 +567,88 @@ private:
 };
 
 /*
+    Remove curly braces from an if statement that already contains a
+    compound statement of size one. I.e.
+
+    if (a) {
+        b;
+    }
+    becomes
+    if (a)
+        b;
+
+    Activates on: the if
+*/
+class RemoveBracesFromIfOp: public CppQuickFixFactory
+{
+public:
+    virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
+    {
+        const QList<AST *> &path = interface->path();
+
+        // show when we're on the 'if' of an if statement
+        int index = path.size() - 1;
+        IfStatementAST *ifStatement = path.at(index)->asIfStatement();
+        if (ifStatement && interface->isCursorOn(ifStatement->if_token) && ifStatement->statement
+                && ifStatement->statement->asCompoundStatement() && ! ifStatement->statement->asCompoundStatement()->statement_list->next) {
+            return singleResult(new Operation(interface, index, ifStatement ));
+        }
+
+        // or if we're on the statement contained in the if
+        // ### This may not be such a good idea, consider nested ifs...
+        for (; index != -1; --index) {
+            IfStatementAST *ifStatement = path.at(index)->asIfStatement();
+            if (ifStatement && ifStatement->statement
+                && interface->isCursorOn(ifStatement->statement)
+                && ifStatement->statement->asCompoundStatement()
+                && ! ifStatement->statement->asCompoundStatement()->statement_list->next )
+            {
+                return singleResult(new Operation(interface, index, ifStatement ));
+            }
+        }
+
+        // ### This could very well be extended to the else branch
+        // and other nodes entirely.
+
+        return noResult();
+    }
+
+private:
+    class Operation: public CppQuickFixOperation
+    {
+    public:
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, IfStatementAST *statement)
+            : CppQuickFixOperation(interface, priority)
+            , _statement(statement)
+        {
+            setDescription(QApplication::translate("CppTools::QuickFix",
+                                                   "Remove Curly Braces"));
+        }
+
+        virtual void performChanges(CppRefactoringFile *currentFile, CppRefactoringChanges *)
+        {
+            ChangeSet changes;
+
+            const CompoundStatementAST * const body = _statement->statement->asCompoundStatement();
+
+            const int lbraceStart = currentFile->endOf(_statement->rparen_token);
+            const int lbraceEnd = currentFile->endOf(body->lbrace_token);
+            changes.remove(lbraceStart,lbraceEnd);
+
+            const int rbraceStart = currentFile->endOf( body->statement_list->lastToken() - 1 );
+            const int rbraceEnd = currentFile->endOf(body->rbrace_token);
+            changes.remove(rbraceStart,rbraceEnd);
+
+            currentFile->change(changes);
+            currentFile->indent(Utils::ChangeSet::Range(lbraceStart, rbraceEnd));
+        }
+
+    private:
+        IfStatementAST *_statement;
+    };
+};
+
+/*
     Replace
     if (Type name = foo()) {...}
 
@@ -1657,6 +1739,7 @@ void registerQuickFixes(ExtensionSystem::IPlugin *plugIn)
     plugIn->addAutoReleasedObject(new RewriteLogicalAndOp);
     plugIn->addAutoReleasedObject(new SplitSimpleDeclarationOp);
     plugIn->addAutoReleasedObject(new AddBracesToIfOp);
+    plugIn->addAutoReleasedObject(new RemoveBracesFromIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfWhileOp);
     plugIn->addAutoReleasedObject(new SplitIfStatementOp);
