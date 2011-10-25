@@ -492,6 +492,38 @@ private:
 
 class AddBracesToSomeOpBase: public CppQuickFixFactory
 {
+public:
+    virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
+    {
+        const QList<AST *> &path = interface->path();
+
+        // show when we're on the 'if' of an if statement
+        int index = path.size() - 1;
+        if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
+            if ( interface->isCursorOn(statement->introToken()) && statement->body()
+                 && ! statement->body()->asCompoundStatement())
+            {
+                return singleResult(new Operation(interface, index, statement->body() ));
+            }
+        }
+
+        // or if we're on the statement contained in the if
+        // ### This may not be such a good idea, consider nested ifs...
+        for (; index != -1; --index) {
+            if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
+                if ( statement->body() && interface->isCursorOn(statement->body())
+                     && ! statement->body()->asCompoundStatement())
+                {
+                    return singleResult(new Operation(interface, index, statement->body() ));
+                }
+            }
+        }
+
+        // ### This could very well be extended to the else branch
+        // and other nodes entirely.
+
+        return noResult();
+    }
 
 protected:
     class StatementWrapper {
@@ -564,39 +596,6 @@ class AddBracesToIfOp: public AddBracesToSomeOpBase
             return QSharedPointer<StatementWrapper>( new IfStatementWrapper( ifStatement ) );
         else
             return QSharedPointer<StatementWrapper>();
-    }
-
-public:
-    virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
-    {
-        const QList<AST *> &path = interface->path();
-
-        // show when we're on the 'if' of an if statement
-        int index = path.size() - 1;
-        if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
-            if ( interface->isCursorOn(statement->introToken()) && statement->body()
-                 && ! statement->body()->asCompoundStatement())
-            {
-                return singleResult(new Operation(interface, index, statement->body() ));
-            }
-        }
-
-        // or if we're on the statement contained in the if
-        // ### This may not be such a good idea, consider nested ifs...
-        for (; index != -1; --index) {
-            if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
-                if ( statement->body() && interface->isCursorOn(statement->body())
-                     && ! statement->body()->asCompoundStatement())
-                {
-                    return singleResult(new Operation(interface, index, statement->body() ));
-                }
-            }
-        }
-
-        // ### This could very well be extended to the else branch
-        // and other nodes entirely.
-
-        return noResult();
     }
 };
 
