@@ -499,7 +499,7 @@ public:
 
         // show when we're on the introductory token of an if/while/for statement:
         int index = path.size() - 1;
-        if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
+        if ( const QSharedPointer<ControlStatementWrapper> statement = createWrapper( path.at(index) ) ) {
             if ( interface->isCursorOn(statement->introToken()) && statement->body()
                  && ! statement->body()->asCompoundStatement())
             {
@@ -510,7 +510,7 @@ public:
         // or if we're on the statement contained in the if/while/for
         // ### This may not be such a good idea, consider nested if/while/fors...
         for (; index != -1; --index) {
-            if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
+            if ( const QSharedPointer<ControlStatementWrapper> statement = createWrapper( path.at(index) ) ) {
                 if ( statement->body() && interface->isCursorOn(statement->body())
                      && ! statement->body()->asCompoundStatement())
                 {
@@ -526,16 +526,16 @@ public:
     }
 
 protected:
-    class StatementWrapper {
+    class ControlStatementWrapper {
     public:
-        virtual ~StatementWrapper() {}
+        virtual ~ControlStatementWrapper() {}
 
         virtual StatementAST * body() const = 0;
         virtual unsigned introToken() const = 0;
     };
 
 private:
-    virtual QSharedPointer<StatementWrapper> createWrapper( AST * ast ) const = 0;
+    virtual QSharedPointer<ControlStatementWrapper> createWrapper( AST * ast ) const = 0;
 
     class Operation: public CppQuickFixOperation
     {
@@ -582,20 +582,20 @@ private:
 */
 class AddBracesToIfOp: public AddBracesToSomeOpBase
 {
-    class IfStatementWrapper : public StatementWrapper {
+    class IfStatementWrapper : public ControlStatementWrapper {
         IfStatementAST * const ast;
     public:
         explicit IfStatementWrapper( IfStatementAST * ast )
-            : StatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper(), ast( ast ) {}
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->if_token;  }
     };
 
-    QSharedPointer<StatementWrapper> createWrapper( AST * ast ) const {
+    QSharedPointer<ControlStatementWrapper> createWrapper( AST * ast ) const {
         if ( IfStatementAST * const ifStatement = ast->asIfStatement() )
-            return QSharedPointer<StatementWrapper>( new IfStatementWrapper( ifStatement ) );
+            return QSharedPointer<ControlStatementWrapper>( new IfStatementWrapper( ifStatement ) );
         else
-            return QSharedPointer<StatementWrapper>();
+            return QSharedPointer<ControlStatementWrapper>();
     }
 };
 
@@ -614,22 +614,22 @@ class AddBracesToIfOp: public AddBracesToSomeOpBase
 */
 class AddBracesToForOp: public AddBracesToSomeOpBase
 {
-    class ForStatementWrapper : public StatementWrapper
+    class ForStatementWrapper : public ControlStatementWrapper
     {
         ForStatementAST *ast;
     public:
         explicit ForStatementWrapper( ForStatementAST *ast )
-            : StatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper(), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->for_token; }
     };
 
-    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
         if ( ForStatementAST * const forStatement = ast->asForStatement() )
-            return QSharedPointer<StatementWrapper>( new ForStatementWrapper( forStatement ) );
+            return QSharedPointer<ControlStatementWrapper>( new ForStatementWrapper( forStatement ) );
         else
-            return QSharedPointer<StatementWrapper>();
+            return QSharedPointer<ControlStatementWrapper>();
     }
 };
 
@@ -648,22 +648,22 @@ class AddBracesToForOp: public AddBracesToSomeOpBase
 */
 class AddBracesToForeachOp: public AddBracesToSomeOpBase
 {
-    class ForeachStatementWrapper : public StatementWrapper
+    class ForeachStatementWrapper : public ControlStatementWrapper
     {
         ForeachStatementAST *ast;
     public:
         explicit ForeachStatementWrapper( ForeachStatementAST *ast )
-            : StatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper(), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->foreach_token; }
     };
 
-    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
         if ( ForeachStatementAST * const foreachStatement = ast->asForeachStatement() )
-            return QSharedPointer<StatementWrapper>( new ForeachStatementWrapper( foreachStatement ) );
+            return QSharedPointer<ControlStatementWrapper>( new ForeachStatementWrapper( foreachStatement ) );
         else
-            return QSharedPointer<StatementWrapper>();
+            return QSharedPointer<ControlStatementWrapper>();
     }
 };
 
@@ -682,22 +682,22 @@ class AddBracesToForeachOp: public AddBracesToSomeOpBase
 */
 class AddBracesToWhileOp: public AddBracesToSomeOpBase
 {
-    class WhileStatementWrapper : public StatementWrapper
+    class WhileStatementWrapper : public ControlStatementWrapper
     {
         WhileStatementAST *ast;
     public:
         explicit WhileStatementWrapper( WhileStatementAST *ast )
-            : StatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper(), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->while_token; }
     };
 
-    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
         if ( WhileStatementAST * const whileStatement = ast->asWhileStatement() )
-            return QSharedPointer<StatementWrapper>( new WhileStatementWrapper( whileStatement ) );
+            return QSharedPointer<ControlStatementWrapper>( new WhileStatementWrapper( whileStatement ) );
         else
-            return QSharedPointer<StatementWrapper>();
+            return QSharedPointer<ControlStatementWrapper>();
     }
 };
 
