@@ -502,6 +502,9 @@ protected:
         virtual unsigned introToken() const = 0;
     };
 
+private:
+    virtual QSharedPointer<StatementWrapper> createWrapper( AST * ast ) const = 0;
+
     class Operation: public CppQuickFixOperation
     {
     public:
