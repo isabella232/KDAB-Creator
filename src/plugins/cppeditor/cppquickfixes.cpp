@@ -497,7 +497,7 @@ public:
     {
         const QList<AST *> &path = interface->path();
 
-        // show when we're on the 'if' of an if statement
+        // show when we're on the introductory token of an if/while/for statement:
         int index = path.size() - 1;
         if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
             if ( interface->isCursorOn(statement->introToken()) && statement->body()
@@ -507,8 +507,8 @@ public:
             }
         }
 
-        // or if we're on the statement contained in the if
-        // ### This may not be such a good idea, consider nested ifs...
+        // or if we're on the statement contained in the if/while/for
+        // ### This may not be such a good idea, consider nested if/while/fors...
         for (; index != -1; --index) {
             if ( const QSharedPointer<StatementWrapper> statement = createWrapper( path.at(index) ) ) {
                 if ( statement->body() && interface->isCursorOn(statement->body())
