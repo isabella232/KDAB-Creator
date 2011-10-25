@@ -600,6 +600,108 @@ class AddBracesToIfOp: public AddBracesToSomeOpBase
 };
 
 /*
+    Add curly braces to a for statement that doesn't already contain a
+    compound statement. I.e.
+
+    for (a;b;c)
+        d;
+    becomes
+    for (a;b;c) {
+        d;
+    }
+
+    Activates on: the for
+*/
+class AddBracesToForOp: public AddBracesToSomeOpBase
+{
+    class ForStatementWrapper : public StatementWrapper
+    {
+        ForStatementAST *ast;
+    public:
+        explicit ForStatementWrapper( ForStatementAST *ast )
+            : StatementWrapper(), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->for_token; }
+    };
+
+    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+        if ( ForStatementAST * const forStatement = ast->asForStatement() )
+            return QSharedPointer<StatementWrapper>( new ForStatementWrapper( forStatement ) );
+        else
+            return QSharedPointer<StatementWrapper>();
+    }
+};
+
+/*
+    Add curly braces to a Q_FOREACH statement that doesn't already contain a
+    compound statement. I.e.
+
+    Q_FOREACH(a,b)
+        c;
+    becomes
+    Q_FOREACH(a,b) {
+        c;
+    }
+
+    Activates on: the foreach
+*/
+class AddBracesToForeachOp: public AddBracesToSomeOpBase
+{
+    class ForeachStatementWrapper : public StatementWrapper
+    {
+        ForeachStatementAST *ast;
+    public:
+        explicit ForeachStatementWrapper( ForeachStatementAST *ast )
+            : StatementWrapper(), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->foreach_token; }
+    };
+
+    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+        if ( ForeachStatementAST * const foreachStatement = ast->asForeachStatement() )
+            return QSharedPointer<StatementWrapper>( new ForeachStatementWrapper( foreachStatement ) );
+        else
+            return QSharedPointer<StatementWrapper>();
+    }
+};
+
+/*
+    Add curly braces to a while statement that doesn't already contain a
+    compound statement. I.e.
+
+    while (a)
+        b;
+    becomes
+    while (a) {
+        b;
+    }
+
+    Activates on: the while
+*/
+class AddBracesToWhileOp: public AddBracesToSomeOpBase
+{
+    class WhileStatementWrapper : public StatementWrapper
+    {
+        WhileStatementAST *ast;
+    public:
+        explicit WhileStatementWrapper( WhileStatementAST *ast )
+            : StatementWrapper(), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->while_token; }
+    };
+
+    QSharedPointer<StatementWrapper> createWrapper(AST *ast) const {
+        if ( WhileStatementAST * const whileStatement = ast->asWhileStatement() )
+            return QSharedPointer<StatementWrapper>( new WhileStatementWrapper( whileStatement ) );
+        else
+            return QSharedPointer<StatementWrapper>();
+    }
+};
+
+/*
     Remove curly braces from an if statement that already contains a
     compound statement of size one. I.e.
 
@@ -1785,6 +1887,9 @@ void registerQuickFixes(ExtensionSystem::IPlugin *plugIn)
     plugIn->addAutoReleasedObject(new RewriteLogicalAndOp);
     plugIn->addAutoReleasedObject(new SplitSimpleDeclarationOp);
     plugIn->addAutoReleasedObject(new AddBracesToIfOp);
+    plugIn->addAutoReleasedObject(new AddBracesToForOp);
+    plugIn->addAutoReleasedObject(new AddBracesToForeachOp);
+    plugIn->addAutoReleasedObject(new AddBracesToWhileOp);
     plugIn->addAutoReleasedObject(new RemoveBracesFromIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfWhileOp);
