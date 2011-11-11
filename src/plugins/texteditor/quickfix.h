@@ -60,7 +60,7 @@ public:
     typedef QSharedPointer<QuickFixOperation> Ptr;
 
 public:
-    QuickFixOperation(int priority = -1);
+    explicit QuickFixOperation(int priority = -1);
     virtual ~QuickFixOperation();
 
     /*!
@@ -109,7 +109,7 @@ class TEXTEDITOR_EXPORT QuickFixFactory: public QObject
     Q_OBJECT
 
 public:
-    QuickFixFactory(QObject *parent = 0);
+    explicit QuickFixFactory(QObject *parent = 0);
     virtual ~QuickFixFactory();
 
     virtual QList<QuickFixOperation::Ptr>

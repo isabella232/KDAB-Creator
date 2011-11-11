@@ -1410,19 +1410,34 @@
             \o Activation
         \row
             \o Add Curly Braces
-            \o Adds curly braces to an if statement that does not contain a
-            compound statement. For example, rewrites
+            \i Adds curly braces to those statements of an if/else-if/else chain or a for/Q_FOREACH/while loop
+            that do not contain a compound statement. For example, rewrites
 
     \code
-    if (a)
-        b;
+    if (a)             for (a)
+        b;                 b;
+    else if (c)        while (a)
+        d;                 b;
+    else if (e) {      Q_FOREACH(a)
+        f;                 b;
+    } else
+        g;
     \endcode
 
             as
 
     \code
-    if (a) {
-        b;
+    if (a) {           for (a) {
+        b;                 b;
+    }                  }
+    else if (c) {      while (a) {
+        d;                 b;
+    }                  }
+    else if (e) {      Q_FOREACH(a) {
+        f;                 b;
+    }                  }
+    else {
+        g;
     }
     \endcode
             \o if

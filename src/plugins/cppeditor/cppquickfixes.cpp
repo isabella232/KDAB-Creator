@@ -514,81 +514,290 @@ private:
     };
 };
 
-/*
-    Add curly braces to a if statement that doesn't already contain a
-    compound statement. I.e.
-
-    if (a)
-        b;
-    becomes
-    if (a) {
-        b;
-    }
-
-    Activates on: the if
-*/
-class AddBracesToIfOp: public CppQuickFixFactory
+class AddBracesToSomeOpBase: public CppQuickFixFactory
 {
 public:
     virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
     {
+        QList<CppQuickFixOperation::Ptr> ops;
+
         const QList<AST *> &path = interface->path();
 
-        // show when we're on the 'if' of an if statement
-        int index = path.size() - 1;
-        IfStatementAST *ifStatement = path.at(index)->asIfStatement();
-        if (ifStatement && interface->isCursorOn(ifStatement->if_token) && ifStatement->statement
-            && ! ifStatement->statement->asCompoundStatement()) {
-            return singleResult(new Operation(interface, index, ifStatement->statement));
-        }
+        // ### TODO: match on the else of an if
+        // ### TODO: when matching an if that is not the first in an if/else-if/else chain,
+        //           walk up the path to the top-most if first - even in the first match case!
 
-        // or if we're on the statement contained in the if
-        // ### This may not be such a good idea, consider nested ifs...
-        for (; index != -1; --index) {
-            IfStatementAST *ifStatement = path.at(index)->asIfStatement();
-            if (ifStatement && ifStatement->statement
-                && interface->isCursorOn(ifStatement->statement)
-                && ! ifStatement->statement->asCompoundStatement()) {
-                return singleResult(new Operation(interface, index, ifStatement->statement));
+        // show when we're on the introductory token of an if/while/for statement:
+        int index = path.size() - 1;
+        if ( const QSharedPointer<ControlStatementWrapper> statement = createWrapper( path.at(index) ) ) {
+            if ( interface->isCursorOn(statement->introToken()) && statement->body()
+                 && ! statement->body()->asCompoundStatement())
+            {
+                const QVector<StatementAST *> bodies = statement->bodies();
+                if ( !bodies.empty() ) {
+                    CppQuickFixOperation::Ptr op( new Operation(interface, index, bodies) );
+                    op->setDescription( statement->describe(interface, bodies) );
+                    ops.push_front(op); // need to add in reverse order so they're sorted from the inside out
+                }
             }
         }
 
-        // ### This could very well be extended to the else branch
-        // and other nodes entirely.
+        // or if we're on the statement contained in the if/while/for
+        // ### This may not be such a good idea, consider nested if/while/fors...
+        for (; index != -1; --index) {
+            if ( const QSharedPointer<ControlStatementWrapper> statement = createWrapper( path.at(index) ) ) {
+                if ( statement->body() && interface->isCursorOn(statement->body())
+                     && ! statement->body()->asCompoundStatement())
+                {
+                    const QVector<StatementAST *> bodies = statement->bodies();
+                    if ( !bodies.empty() ) {
+                        CppQuickFixOperation::Ptr op( new Operation(interface, index, bodies) );
+                        op->setDescription( statement->describe(interface, bodies) );
+                        ops.push_front(op); // need to add in reverse order so they're sorted from the inside out
+                    }
+                }
+            }
+        }
 
-        return noResult();
+        return ops;
     }
 
+protected:
+    class ControlStatementWrapper {
+        const char * const m_controlType;
+    public:
+        explicit ControlStatementWrapper( const char * controlType )
+            : m_controlType( controlType ) {}
+        virtual ~ControlStatementWrapper() {}
+
+        virtual StatementAST * body() const = 0;
+        virtual unsigned introToken() const = 0;
+
+        QString describe( const QSharedPointer<const CppQuickFixAssistInterface> & interface, const QVector<StatementAST*> & bodies ) const {
+            if ( interface->isCursorOn( introToken() ) ) {
+                return QApplication::translate("CppTools::QuickFix",
+                                               "Add Curly Braces");
+            } else {
+                unsigned line, col;
+                interface->currentFile()->lineAndColumn( interface->currentFile()->startOf( introToken() ),
+                                                         &line, &col );
+                if ( bodies.size() > 1 ) {
+                    return QApplication::translate("CppTools::QuickFix",
+                                                   "Add Curly Braces (%3 branches; %2/l%1)")
+                            .arg(line).arg(QString::fromLatin1(m_controlType)).arg(bodies.size());
+                } else {
+                    return QApplication::translate("CppTools::QuickFix",
+                                                   "Add Curly Braces (%2/l%1)")
+                            .arg(line).arg(QString::fromLatin1(m_controlType));
+                }
+            }
+        }
+
+        virtual QVector<StatementAST*> bodies() const {
+            QVector<StatementAST*> result;
+            if ( body() && ! body()->asCompoundStatement() )
+                result.push_back( body() );
+            return result;
+        }
+    };
+
 private:
+    virtual QSharedPointer<ControlStatementWrapper> createWrapper( AST * ast ) const = 0;
+
     class Operation: public CppQuickFixOperation
     {
     public:
-        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, StatementAST *statement)
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, const QVector<StatementAST*> & statements)
             : CppQuickFixOperation(interface, priority)
-            , _statement(statement)
+            , _statements(statements)
         {
-            setDescription(QApplication::translate("CppTools::QuickFix",
-                                                   "Add Curly Braces"));
         }
 
         virtual void performChanges(const CppRefactoringFilePtr &currentFile, const CppRefactoringChanges &)
         {
             ChangeSet changes;
 
-            const int start = currentFile->endOf(_statement->firstToken() - 1);
-            changes.insert(start, QLatin1String(" {"));
+            Q_FOREACH( StatementAST *statement, _statements ) {
+                const int start = currentFile->endOf(statement->firstToken() - 1);
+                changes.insert(start, QLatin1String(" {"));
 
-            const int end = currentFile->endOf(_statement->lastToken() - 1);
-            changes.insert(end, QLatin1String("\n}"));
+                const int end = currentFile->endOf(statement->lastToken() - 1);
+                changes.insert(end, "\n}");
+
+                currentFile->appendIndentRange(Utils::ChangeSet::Range(start, end));
+            }
 
             currentFile->setChangeSet(changes);
-            currentFile->appendIndentRange(Utils::ChangeSet::Range(start, end));
             currentFile->apply();
         }
 
     private:
-        StatementAST *_statement;
+        QVector<StatementAST*> _statements;
     };
+};
+
+/*
+    Add curly braces to a if statement that doesn't already contain a
+    compound statement. I.e.
+
+    if (a)
+        b;
+    else
+        c;
+    becomes
+    if (a) {
+        b;
+    }
+    else {
+        c;
+    }
+
+    Iterates through the complete else-if chain.
+
+    Activates on: the if
+*/
+class AddBracesToIfOp: public AddBracesToSomeOpBase
+{
+    class IfStatementWrapper : public ControlStatementWrapper {
+        IfStatementAST * const ast;
+    public:
+        explicit IfStatementWrapper( IfStatementAST * ast )
+            : ControlStatementWrapper("IF"), ast( ast ) {}
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->if_token;  }
+
+        QVector<StatementAST*> bodies() const {
+            // reimplemented to return all bodies in the else-if chain:
+            QVector<StatementAST*> result = findNonCompoundIfStatementBodies();
+            if ( StatementAST * finalElse = findFirstNonIfNonCompoundElseStatementBody() )
+                result.push_back( finalElse );
+            return result;
+        }
+
+    private:
+        QVector<StatementAST*> findNonCompoundIfStatementBodies() const {
+            QVector<StatementAST*> result;
+            for ( IfStatementAST * it = ast ; it ; it = it->else_statement ? it->else_statement->asIfStatement() : 0 )
+                if ( it->statement && ! it->statement->asCompoundStatement() )
+                    result.push_back( it->statement );
+            return result;
+        }
+        StatementAST * findFirstNonIfNonCompoundElseStatementBody() const {
+            for ( IfStatementAST * it = ast ; it ; it = it->else_statement ? it->else_statement->asIfStatement() : 0 )
+                if ( it->else_statement && ! it->else_statement->asIfStatement() && ! it->else_statement->asCompoundStatement() )
+                    return it->else_statement;
+            return 0;
+        }
+    };
+
+    QSharedPointer<ControlStatementWrapper> createWrapper( AST * ast ) const {
+        if ( IfStatementAST * const ifStatement = ast->asIfStatement() )
+            return QSharedPointer<ControlStatementWrapper>( new IfStatementWrapper( ifStatement ) );
+        else
+            return QSharedPointer<ControlStatementWrapper>();
+    }
+};
+
+/*
+    Add curly braces to a for statement that doesn't already contain a
+    compound statement. I.e.
+
+    for (a;b;c)
+        d;
+    becomes
+    for (a;b;c) {
+        d;
+    }
+
+    Activates on: the for
+*/
+class AddBracesToForOp: public AddBracesToSomeOpBase
+{
+    class ForStatementWrapper : public ControlStatementWrapper
+    {
+        ForStatementAST *ast;
+    public:
+        explicit ForStatementWrapper( ForStatementAST *ast )
+            : ControlStatementWrapper("FOR"), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->for_token; }
+    };
+
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
+        if ( ForStatementAST * const forStatement = ast->asForStatement() )
+            return QSharedPointer<ControlStatementWrapper>( new ForStatementWrapper( forStatement ) );
+        else
+            return QSharedPointer<ControlStatementWrapper>();
+    }
+};
+
+/*
+    Add curly braces to a Q_FOREACH statement that doesn't already contain a
+    compound statement. I.e.
+
+    Q_FOREACH(a,b)
+        c;
+    becomes
+    Q_FOREACH(a,b) {
+        c;
+    }
+
+    Activates on: the foreach
+*/
+class AddBracesToForeachOp: public AddBracesToSomeOpBase
+{
+    class ForeachStatementWrapper : public ControlStatementWrapper
+    {
+        ForeachStatementAST *ast;
+    public:
+        explicit ForeachStatementWrapper( ForeachStatementAST *ast )
+            : ControlStatementWrapper("FOREACH"), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->foreach_token; }
+    };
+
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
+        if ( ForeachStatementAST * const foreachStatement = ast->asForeachStatement() )
+            return QSharedPointer<ControlStatementWrapper>( new ForeachStatementWrapper( foreachStatement ) );
+        else
+            return QSharedPointer<ControlStatementWrapper>();
+    }
+};
+
+/*
+    Add curly braces to a while statement that doesn't already contain a
+    compound statement. I.e.
+
+    while (a)
+        b;
+    becomes
+    while (a) {
+        b;
+    }
+
+    Activates on: the while
+*/
+class AddBracesToWhileOp: public AddBracesToSomeOpBase
+{
+    class WhileStatementWrapper : public ControlStatementWrapper
+    {
+        WhileStatementAST *ast;
+    public:
+        explicit WhileStatementWrapper( WhileStatementAST *ast )
+            : ControlStatementWrapper("WHILE"), ast( ast ) {}
+
+        StatementAST * body() const { return ast->statement; }
+        unsigned introToken() const { return ast->while_token; }
+    };
+
+    QSharedPointer<ControlStatementWrapper> createWrapper(AST *ast) const {
+        if ( WhileStatementAST * const whileStatement = ast->asWhileStatement() )
+            return QSharedPointer<ControlStatementWrapper>( new WhileStatementWrapper( whileStatement ) );
+        else
+            return QSharedPointer<ControlStatementWrapper>();
+    }
 };
 
 /*
@@ -2070,6 +2279,9 @@ void registerQuickFixes(ExtensionSystem::IPlugin *plugIn)
     plugIn->addAutoReleasedObject(new RewriteLogicalAndOp);
     plugIn->addAutoReleasedObject(new SplitSimpleDeclarationOp);
     plugIn->addAutoReleasedObject(new AddBracesToIfOp);
+    plugIn->addAutoReleasedObject(new AddBracesToForOp);
+    plugIn->addAutoReleasedObject(new AddBracesToForeachOp);
+    plugIn->addAutoReleasedObject(new AddBracesToWhileOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfWhileOp);
     plugIn->addAutoReleasedObject(new SplitIfStatementOp);
