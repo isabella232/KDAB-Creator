@@ -130,6 +130,12 @@ private:
     bool m_error;
 };
 
+inline ChangeSet::Range hull(const ChangeSet::Range &lhs, const ChangeSet::Range &rhs)
+{
+    return ChangeSet::Range( qMin( lhs.start, rhs.start ),
+                             qMax( lhs.end,    rhs.end  ) );
+}
+
 } // namespace Utils
 
 #endif // CHANGESET_H

@@ -800,6 +800,108 @@ class AddBracesToWhileOp: public AddBracesToSomeOpBase
     }
 };
 
+class RemoveBracesFromSomeOpBase : public CppQuickFixFactory
+{
+};
+
+
+/*
+    Remove curly braces from an if statement that already contains a
+    compound statement of size one. I.e.
+
+    if (a) {
+        b;
+    }
+    becomes
+    if (a)
+        b;
+
+    Activates on: the if
+*/
+class RemoveBracesFromIfOp: public RemoveBracesFromSomeOpBase
+{
+public:
+    virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
+    {
+        const QList<AST *> &path = interface->path();
+
+        // show when we're on the 'if' of an if statement
+        int index = path.size() - 1;
+        IfStatementAST *ifStatement = path.at(index)->asIfStatement();
+        if (ifStatement && interface->isCursorOn(ifStatement->if_token) && ifStatement->statement
+                && ifStatement->statement->asCompoundStatement() && ! ifStatement->statement->asCompoundStatement()->statement_list->next) {
+            return singleResult(new Operation(interface, index, ifStatement->statement->asCompoundStatement() ));
+        }
+
+        // or if we're on the statement contained in the if
+        // ### This may not be such a good idea, consider nested ifs...
+        for (; index != -1; --index) {
+            IfStatementAST *ifStatement = path.at(index)->asIfStatement();
+            if (ifStatement && ifStatement->statement
+                && interface->isCursorOn(ifStatement->statement)
+                && ifStatement->statement->asCompoundStatement()
+                && ! ifStatement->statement->asCompoundStatement()->statement_list->next )
+            {
+                return singleResult(new Operation(interface, index, ifStatement->statement->asCompoundStatement() ));
+            }
+        }
+
+        // ### This could very well be extended to the else branch
+        // and other nodes entirely.
+
+        return noResult();
+    }
+
+private:
+    class Operation: public CppQuickFixOperation
+    {
+    public:
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, CompoundStatementAST *statement)
+            : CppQuickFixOperation(interface, priority)
+            , _statement(statement)
+        {
+            setDescription(QApplication::translate("CppTools::QuickFix",
+                                                   "Remove Curly Braces"));
+        }
+
+        virtual void performChanges(const CppRefactoringFilePtr &currentFile, const CppRefactoringChanges &)
+        {
+            const ChangeSet::Range before = findRemoveRange( currentFile, QLatin1String("{"), _statement->lbrace_token );
+            const ChangeSet::Range after  = findRemoveRange( currentFile, QLatin1String("}"), _statement->rbrace_token );
+
+            ChangeSet changes;
+
+            changes.remove( before );
+            changes.remove( after  );
+
+            currentFile->setChangeSet(changes);
+            currentFile->appendIndentRange( hull( before, after ) );
+            currentFile->apply();
+        }
+
+    private:
+        static ChangeSet::Range
+        findRemoveRange(const CppRefactoringFilePtr &currentFile, const QString &acceptedLineContents, int brace)
+        {
+            // if the 'brace' is on a line by itself, remove the line; otherwise, only remove the 'brace'
+            const int braceStart = currentFile->startOf( brace );
+            unsigned braceLineNumber, dummy;
+            currentFile->lineAndColumn( braceStart, &braceLineNumber, &dummy );
+            const int braceThisLineStart = currentFile->position( braceLineNumber,   1 );
+            const int braceNextLineStart = currentFile->position( braceLineNumber+1, 1 );
+            const QString braceLine = currentFile->textOf( braceThisLineStart, braceNextLineStart ).trimmed();
+
+            if ( braceLine == acceptedLineContents )
+                return Utils::ChangeSet::Range( braceThisLineStart, braceNextLineStart );
+            else
+                return Utils::ChangeSet::Range( braceStart, braceStart+1 );
+        }
+
+    private:
+        CompoundStatementAST *_statement;
+    };
+};
+
 /*
     Replace
     if (Type name = foo()) {...}
@@ -2282,6 +2384,7 @@ void registerQuickFixes(ExtensionSystem::IPlugin *plugIn)
     plugIn->addAutoReleasedObject(new AddBracesToForOp);
     plugIn->addAutoReleasedObject(new AddBracesToForeachOp);
     plugIn->addAutoReleasedObject(new AddBracesToWhileOp);
+    plugIn->addAutoReleasedObject(new RemoveBracesFromIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfIfOp);
     plugIn->addAutoReleasedObject(new MoveDeclarationOutOfWhileOp);
     plugIn->addAutoReleasedObject(new SplitIfStatementOp);
