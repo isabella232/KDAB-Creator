@@ -513,7 +513,7 @@ public:
             if ( interface->isCursorOn(statement->introToken()) && statement->body()
                  && ! statement->body()->asCompoundStatement())
             {
-                return singleResult(new Operation(interface, index, statement->body() ));
+                return singleResult(new Operation(interface, index, statement->bodies() ));
             }
         }
 
@@ -524,13 +524,10 @@ public:
                 if ( statement->body() && interface->isCursorOn(statement->body())
                      && ! statement->body()->asCompoundStatement())
                 {
-                    return singleResult(new Operation(interface, index, statement->body() ));
+                    return singleResult(new Operation(interface, index, statement->bodies() ));
                 }
             }
         }
-
-        // ### This could very well be extended to the else branch
-        // and other nodes entirely.
 
         return noResult();
     }
@@ -542,6 +539,13 @@ protected:
 
         virtual StatementAST * body() const = 0;
         virtual unsigned introToken() const = 0;
+
+        virtual QVector<StatementAST*> bodies() const {
+            QVector<StatementAST*> result;
+            if ( body() && ! body()->asCompoundStatement() )
+                result.push_back( body() );
+            return result;
+        }
     };
 
 private:
@@ -550,9 +554,9 @@ private:
     class Operation: public CppQuickFixOperation
     {
     public:
-        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, StatementAST *statement)
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, const QVector<StatementAST*> & statements)
             : CppQuickFixOperation(interface, priority)
-            , _statement(statement)
+            , _statements(statements)
         {
             setDescription(QApplication::translate("CppTools::QuickFix",
                                                    "Add Curly Braces"));
@@ -562,19 +566,22 @@ private:
         {
             ChangeSet changes;
 
-            const int start = currentFile->endOf(_statement->firstToken() - 1);
-            changes.insert(start, QLatin1String(" {"));
+            Q_FOREACH( StatementAST *statement, _statements ) {
+                const int start = currentFile->endOf(statement->firstToken() - 1);
+                changes.insert(start, QLatin1String(" {"));
 
-            const int end = currentFile->endOf(_statement->lastToken() - 1);
-            changes.insert(end, "\n}");
+                const int end = currentFile->endOf(statement->lastToken() - 1);
+                changes.insert(end, "\n}");
+
+                currentFile->appendIndentRange(Utils::ChangeSet::Range(start, end));
+            }
 
             currentFile->setChangeSet(changes);
-            currentFile->appendIndentRange(Utils::ChangeSet::Range(start, end));
             currentFile->apply();
         }
 
     private:
-        StatementAST *_statement;
+        QVector<StatementAST*> _statements;
     };
 };
 
@@ -584,10 +591,17 @@ private:
 
     if (a)
         b;
+    else
+        c;
     becomes
     if (a) {
         b;
     }
+    else {
+        c;
+    }
+
+    Iterates through the complete else-if chain.
 
     Activates on: the if
 */
@@ -600,6 +614,29 @@ class AddBracesToIfOp: public AddBracesToSomeOpBase
             : ControlStatementWrapper(), ast( ast ) {}
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->if_token;  }
+
+        QVector<StatementAST*> bodies() const {
+            // reimplemented to return all bodies in the else-if chain:
+            QVector<StatementAST*> result = findNonCompoundIfStatementBodies();
+            if ( StatementAST * finalElse = findFirstNonIfNonCompoundElseStatementBody() )
+                result.push_back( finalElse );
+            return result;
+        }
+
+    private:
+        QVector<StatementAST*> findNonCompoundIfStatementBodies() const {
+            QVector<StatementAST*> result;
+            for ( IfStatementAST * it = ast ; it ; it = it->else_statement ? it->else_statement->asIfStatement() : 0 )
+                if ( it->statement && ! it->statement->asCompoundStatement() )
+                    result.push_back( it->statement );
+            return result;
+        }
+        StatementAST * findFirstNonIfNonCompoundElseStatementBody() const {
+            for ( IfStatementAST * it = ast ; it ; it = it->else_statement ? it->else_statement->asIfStatement() : 0 )
+                if ( it->else_statement && ! it->else_statement->asIfStatement() && ! it->else_statement->asCompoundStatement() )
+                    return it->else_statement;
+            return 0;
+        }
     };
 
     QSharedPointer<ControlStatementWrapper> createWrapper( AST * ast ) const {
