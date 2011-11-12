@@ -773,7 +773,7 @@ public:
         IfStatementAST *ifStatement = path.at(index)->asIfStatement();
         if (ifStatement && interface->isCursorOn(ifStatement->if_token) && ifStatement->statement
                 && ifStatement->statement->asCompoundStatement() && ! ifStatement->statement->asCompoundStatement()->statement_list->next) {
-            return singleResult(new Operation(interface, index, ifStatement ));
+            return singleResult(new Operation(interface, index, ifStatement->statement->asCompoundStatement() ));
         }
 
         // or if we're on the statement contained in the if
@@ -785,7 +785,7 @@ public:
                 && ifStatement->statement->asCompoundStatement()
                 && ! ifStatement->statement->asCompoundStatement()->statement_list->next )
             {
-                return singleResult(new Operation(interface, index, ifStatement ));
+                return singleResult(new Operation(interface, index, ifStatement->statement->asCompoundStatement() ));
             }
         }
 
@@ -799,7 +799,7 @@ private:
     class Operation: public CppQuickFixOperation
     {
     public:
-        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, IfStatementAST *statement)
+        Operation(const QSharedPointer<const CppQuickFixAssistInterface> &interface, int priority, CompoundStatementAST *statement)
             : CppQuickFixOperation(interface, priority)
             , _statement(statement)
         {
@@ -809,10 +809,8 @@ private:
 
         virtual void performChanges(const CppRefactoringFilePtr &currentFile, const CppRefactoringChanges &)
         {
-            const CompoundStatementAST * const body = _statement->statement->asCompoundStatement();
-
-            const ChangeSet::Range before = findRemoveRange( currentFile, QLatin1String("{"), body->lbrace_token );
-            const ChangeSet::Range after  = findRemoveRange( currentFile, QLatin1String("}"), body->rbrace_token );
+            const ChangeSet::Range before = findRemoveRange( currentFile, QLatin1String("{"), _statement->lbrace_token );
+            const ChangeSet::Range after  = findRemoveRange( currentFile, QLatin1String("}"), _statement->rbrace_token );
 
             ChangeSet changes;
 
@@ -843,7 +841,7 @@ private:
         }
 
     private:
-        IfStatementAST *_statement;
+        CompoundStatementAST *_statement;
     };
 };
 
