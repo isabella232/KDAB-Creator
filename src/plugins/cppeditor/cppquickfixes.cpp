@@ -509,6 +509,10 @@ public:
 
         const QList<AST *> &path = interface->path();
 
+        // ### TODO: match on the else of an if
+        // ### TODO: when matching an if that is not the first in an if/else-if/else chain,
+        //           walk up the path to the top-most if first - even in the first match case!
+
         // show when we're on the introductory token of an if/while/for statement:
         int index = path.size() - 1;
         if ( const QSharedPointer<ControlStatementWrapper> statement = createWrapper( path.at(index) ) ) {
