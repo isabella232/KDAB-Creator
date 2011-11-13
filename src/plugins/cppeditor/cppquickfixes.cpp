@@ -505,6 +505,8 @@ class AddBracesToSomeOpBase: public CppQuickFixFactory
 public:
     virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
     {
+        QList<CppQuickFixOperation::Ptr> ops;
+
         const QList<AST *> &path = interface->path();
 
         // show when we're on the introductory token of an if/while/for statement:
@@ -513,7 +515,12 @@ public:
             if ( interface->isCursorOn(statement->introToken()) && statement->body()
                  && ! statement->body()->asCompoundStatement())
             {
-                return singleResult(new Operation(interface, index, statement->bodies() ));
+                const QVector<StatementAST *> bodies = statement->bodies();
+                if ( !bodies.empty() ) {
+                    CppQuickFixOperation::Ptr op( new Operation(interface, index, bodies) );
+                    op->setDescription( statement->describe(interface, bodies) );
+                    ops.push_front(op); // need to add in reverse order so they're sorted from the inside out
+                }
             }
         }
 
@@ -524,21 +531,49 @@ public:
                 if ( statement->body() && interface->isCursorOn(statement->body())
                      && ! statement->body()->asCompoundStatement())
                 {
-                    return singleResult(new Operation(interface, index, statement->bodies() ));
+                    const QVector<StatementAST *> bodies = statement->bodies();
+                    if ( !bodies.empty() ) {
+                        CppQuickFixOperation::Ptr op( new Operation(interface, index, bodies) );
+                        op->setDescription( statement->describe(interface, bodies) );
+                        ops.push_front(op); // need to add in reverse order so they're sorted from the inside out
+                    }
                 }
             }
         }
 
-        return noResult();
+        return ops;
     }
 
 protected:
     class ControlStatementWrapper {
+        const char * const m_controlType;
     public:
+        explicit ControlStatementWrapper( const char * controlType )
+            : m_controlType( controlType ) {}
         virtual ~ControlStatementWrapper() {}
 
         virtual StatementAST * body() const = 0;
         virtual unsigned introToken() const = 0;
+
+        QString describe( const QSharedPointer<const CppQuickFixAssistInterface> & interface, const QVector<StatementAST*> & bodies ) const {
+            if ( interface->isCursorOn( introToken() ) ) {
+                return QApplication::translate("CppTools::QuickFix",
+                                               "Add Curly Braces");
+            } else {
+                unsigned line, col;
+                interface->currentFile()->lineAndColumn( interface->currentFile()->startOf( introToken() ),
+                                                         &line, &col );
+                if ( bodies.size() > 1 ) {
+                    return QApplication::translate("CppTools::QuickFix",
+                                                   "Add Curly Braces (%3 branches; %2/l%1)")
+                            .arg(line).arg(QString::fromLatin1(m_controlType)).arg(bodies.size());
+                } else {
+                    return QApplication::translate("CppTools::QuickFix",
+                                                   "Add Curly Braces (%2/l%1)")
+                            .arg(line).arg(QString::fromLatin1(m_controlType));
+                }
+            }
+        }
 
         virtual QVector<StatementAST*> bodies() const {
             QVector<StatementAST*> result;
@@ -558,8 +593,6 @@ private:
             : CppQuickFixOperation(interface, priority)
             , _statements(statements)
         {
-            setDescription(QApplication::translate("CppTools::QuickFix",
-                                                   "Add Curly Braces"));
         }
 
         virtual void performChanges(const CppRefactoringFilePtr &currentFile, const CppRefactoringChanges &)
@@ -611,7 +644,7 @@ class AddBracesToIfOp: public AddBracesToSomeOpBase
         IfStatementAST * const ast;
     public:
         explicit IfStatementWrapper( IfStatementAST * ast )
-            : ControlStatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper("IF"), ast( ast ) {}
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->if_token;  }
 
@@ -667,7 +700,7 @@ class AddBracesToForOp: public AddBracesToSomeOpBase
         ForStatementAST *ast;
     public:
         explicit ForStatementWrapper( ForStatementAST *ast )
-            : ControlStatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper("FOR"), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->for_token; }
@@ -701,7 +734,7 @@ class AddBracesToForeachOp: public AddBracesToSomeOpBase
         ForeachStatementAST *ast;
     public:
         explicit ForeachStatementWrapper( ForeachStatementAST *ast )
-            : ControlStatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper("FOREACH"), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->foreach_token; }
@@ -735,7 +768,7 @@ class AddBracesToWhileOp: public AddBracesToSomeOpBase
         WhileStatementAST *ast;
     public:
         explicit WhileStatementWrapper( WhileStatementAST *ast )
-            : ControlStatementWrapper(), ast( ast ) {}
+            : ControlStatementWrapper("WHILE"), ast( ast ) {}
 
         StatementAST * body() const { return ast->statement; }
         unsigned introToken() const { return ast->while_token; }
