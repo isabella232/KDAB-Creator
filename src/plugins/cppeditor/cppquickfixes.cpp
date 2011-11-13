@@ -748,6 +748,12 @@ class AddBracesToWhileOp: public AddBracesToSomeOpBase
             return QSharedPointer<ControlStatementWrapper>();
     }
 };
+
+class RemoveBracesFromSomeOpBase : public CppQuickFixFactory
+{
+};
+
+
 /*
     Remove curly braces from an if statement that already contains a
     compound statement of size one. I.e.
@@ -761,7 +767,7 @@ class AddBracesToWhileOp: public AddBracesToSomeOpBase
 
     Activates on: the if
 */
-class RemoveBracesFromIfOp: public CppQuickFixFactory
+class RemoveBracesFromIfOp: public RemoveBracesFromSomeOpBase
 {
 public:
     virtual QList<CppQuickFixOperation::Ptr> match(const QSharedPointer<const CppQuickFixAssistInterface> &interface)
