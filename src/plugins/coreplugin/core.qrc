@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/core">
+        <file>images/kdablogo160.png</file>
         <file>images/clean_pane_small.png</file>
         <file>images/clear.png</file>
         <file>images/closebutton.png</file>

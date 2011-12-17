@@ -1665,7 +1665,7 @@ void EditorManager::vcsOpenCurrentEditor()
 
 void EditorManager::updateWindowTitle()
 {
-    QString windowTitle = tr("Qt Creator");
+    QString windowTitle = tr("Qt Creator (KDAB)");
     const QString dashSep = QLatin1String(" - ");
     if (!d->m_titleAddition.isEmpty()) {
         windowTitle.prepend(d->m_titleAddition + dashSep);

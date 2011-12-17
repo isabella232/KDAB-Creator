@@ -173,7 +173,7 @@ MainWindow::MainWindow() :
     (void) new DocumentManager(this);
     OutputPaneManager::create();
 
-    setWindowTitle(tr("Qt Creator"));
+    setWindowTitle(tr("Qt Creator (KDAB)"));
 #ifndef Q_OS_MAC
     QApplication::setWindowIcon(QIcon(QLatin1String(Constants::ICON_QTLOGO_128)));
 #endif
@@ -810,6 +810,17 @@ void MainWindow::registerDefaultActions()
 #endif
     connect(tmpaction, SIGNAL(triggered()), this,  SLOT(aboutQtCreator()));
 
+    // About KDAB
+#ifdef Q_WS_MAC
+    tmpaction = new QAction(tr("About &KDAB"), this); // it's convention not to add dots to the about menu
+#else
+    tmpaction = new QAction(tr("About &KDAB..."), this);
+#endif
+    cmd = am->registerAction(tmpaction, Constants::ABOUT_KDAB, globalContext);
+    mhelp->addAction(cmd, Constants::G_HELP_ABOUT);
+    tmpaction->setEnabled(true);
+    connect(tmpaction, SIGNAL(triggered()), this,  SLOT(aboutKDAB()));
+
     //About Plugins Action
     tmpaction = new QAction(tr("About &Plugins..."), this);
     cmd = am->registerAction(tmpaction, Constants::ABOUT_PLUGINS, globalContext);
@@ -1335,6 +1346,25 @@ void MainWindow::aboutQtCreator()
                 this, SLOT(destroyVersionDialog()));
     }
     m_versionDialog->show();
+}
+
+void MainWindow::aboutKDAB()
+{
+    QMessageBox mb(this);
+    mb.setWindowTitle(tr("About KDAB"));
+    mb.setText(trUtf8("Klarälvdalens Datakonsult AB (KDAB)"));
+    mb.setInformativeText(
+      tr("<qt>KDAB, the Qt experts, provide consulting and mentoring for developing "
+         "Qt applications from scratch and in porting from all popular and legacy "
+         "frameworks to Qt. Our software products increase Qt productivity and our "
+         "Qt trainers have trained 50% of commercial Qt developers globally.</p>"
+         "<p>Please visit <a href='http://www.kdab.com'>http://www.kdab.com</a> "
+         "to meet us. "
+         "We also offer Qt training courses."
+         "</p></qt>"));
+    mb.setIconPixmap(QPixmap(":/core/images/kdablogo160.png"));
+    mb.addButton(QMessageBox::Close);
+    mb.exec();
 }
 
 void MainWindow::destroyVersionDialog()
