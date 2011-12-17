@@ -1668,7 +1668,7 @@ void EditorManager::vcsOpenCurrentEditor()
 
 void EditorManager::updateWindowTitle()
 {
-    QString windowTitle = tr("Qt Creator");
+    QString windowTitle = tr("Qt Creator (KDAB)");
     if (!d->m_titleAddition.isEmpty()) {
         windowTitle.prepend(d->m_titleAddition + " - ");
     }

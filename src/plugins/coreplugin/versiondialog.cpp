@@ -62,7 +62,7 @@ VersionDialog::VersionDialog(QWidget *parent)
     QGridLayout *layout = new QGridLayout(this);
     layout->setSizeConstraint(QLayout::SetFixedSize);
 
-    QString version = QLatin1String(Constants::IDE_VERSION_LONG);
+    QString version = QLatin1String(Constants::IDE_VERSION_LONG) + QLatin1String("-kdab") + QString::number(KDAB_VERSION);
 
     QString ideVersionDescription;
 #ifdef IDE_VERSION_DESCRIPTION
