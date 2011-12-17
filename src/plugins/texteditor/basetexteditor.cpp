@@ -2423,7 +2423,8 @@ BaseTextEditorPrivate::BaseTextEditorPrivate()
     m_assistRelevantContentAdded(false),
     m_cursorBlockNumber(-1),
     m_autoCompleter(new AutoCompleter),
-    m_indenter(new Indenter)
+    m_indenter(new Indenter),
+    m_centerCursor(false)
 {
 }
 
@@ -5517,7 +5518,16 @@ void BaseTextEditorWidget::setDisplaySettings(const DisplaySettings &ds)
     setVisibleWrapColumn(ds.m_showWrapColumn ? ds.m_wrapColumn : 0);
     setHighlightCurrentLine(ds.m_highlightCurrentLine);
     setRevisionsVisible(ds.m_markTextChanges);
-    setCenterOnScroll(ds.m_centerCursorOnScroll);
+    setCenterOnScroll(ds.m_centerCursor == DisplaySettings::CenterOnScroll);
+
+    bool centerAlways =  (ds.m_centerCursor == DisplaySettings::CenterAlways);
+    if (d->m_centerCursor != centerAlways) {
+        if (centerAlways)
+            connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(centerCursor()));
+        else
+            disconnect(this, SIGNAL(cursorPositionChanged()), this, SLOT(centerCursor()));
+        d->m_centerCursor = centerAlways;
+    }
 
     if (d->m_displaySettings.m_visualizeWhitespace != ds.m_visualizeWhitespace) {
         if (SyntaxHighlighter *highlighter = baseTextDocument()->syntaxHighlighter())

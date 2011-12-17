@@ -44,6 +44,12 @@ namespace TextEditor {
 class TEXTEDITOR_EXPORT DisplaySettings
 {
 public:
+    enum CenterCursor {
+        CenterNever = 0,
+        CenterOnScroll = 1,
+        CenterAlways = 2
+    };
+
     DisplaySettings();
 
     void toSettings(const QString &category, QSettings *s) const;
@@ -60,7 +66,7 @@ public:
     bool m_animateMatchingParentheses;
     bool m_markTextChanges;
     bool m_autoFoldFirstComment;
-    bool m_centerCursorOnScroll;
+    int m_centerCursor;
 
     bool equals(const DisplaySettings &ds) const;
 };

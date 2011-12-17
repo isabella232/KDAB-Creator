@@ -65,7 +65,14 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
+      <item row="2" column="1">
+       <widget class="QCheckBox" name="animateMatchingParentheses">
+        <property name="text">
+         <string>&amp;Animate matching parentheses</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
        <widget class="QCheckBox" name="visualizeWhitespace">
         <property name="toolTip">
          <string>Show tabs and spaces.</string>
@@ -75,26 +82,58 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QCheckBox" name="animateMatchingParentheses">
-        <property name="text">
-         <string>&amp;Animate matching parentheses</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
+      <item row="3" column="1">
        <widget class="QCheckBox" name="autoFoldFirstComment">
         <property name="text">
          <string>Auto-fold first &amp;comment</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="0">
-       <widget class="QCheckBox" name="centerOnScroll">
-        <property name="text">
-         <string>Center &amp;cursor on scroll</string>
-        </property>
-       </widget>
+      <item row="4" column="0" colspan="2">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="centerCursorText">
+          <property name="text">
+           <string>Automaticaly center cur&amp;sor</string>
+          </property>
+          <property name="buddy">
+           <cstring>centerCursor</cstring>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="centerCursor">
+          <item>
+           <property name="text">
+            <string>Never</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>On Scroll</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Always</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
