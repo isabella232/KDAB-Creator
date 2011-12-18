@@ -42,7 +42,8 @@ SUBDIRS   = plugin_coreplugin \
             plugin_qmlprofiler \
             plugin_remotelinux \
             plugin_madde \
-            plugin_valgrind
+            plugin_valgrind \
+            plugin_gammaray
 
 isEmpty(IDE_PACKAGE_MODE) {
     SUBDIRS += plugin_helloworld \
@@ -301,3 +302,7 @@ plugin_macros.depends = plugin_texteditor
 plugin_macros.depends += plugin_find
 plugin_macros.depends += plugin_locator
 plugin_macros.depends += plugin_coreplugin
+
+plugin_gammaray.subdir = gammaray
+plugin_gammaray.depends = plugin_analyzerbase
+plugin_gammaray.depends += plugin_coreplugin
