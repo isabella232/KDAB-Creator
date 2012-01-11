@@ -1698,7 +1698,7 @@ QString QmlJSEditor::QmlJSTextEditorWidget::foldReplacementText(const QTextBlock
                         if (binding && binding->qualifiedId->name == QLatin1String("id")) {
                             if (ExpressionStatement *e = cast<ExpressionStatement*>(binding->statement))
                                 if (IdentifierExpression *i = cast<IdentifierExpression*>(e->expression))
-                                    return QLatin1String("id: ") + i->name + QLatin1String("...");
+                                    return QLatin1String("id: ") + i->name.toString() + QLatin1String("...");
                         }
                     }
                 }
