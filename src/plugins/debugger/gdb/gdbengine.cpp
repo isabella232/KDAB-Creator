@@ -5161,7 +5161,7 @@ bool GdbEngine::isHiddenBreakpoint(const BreakpointResponseId &id) const
 
 bool GdbEngine::usesExecInterrupt() const
 {
-    if (m_gdbVersion < 70000)
+    if (m_gdbVersion < 70000 || m_isQnxGdb)
         return false;
 
     // debuggerCore()->boolSetting(TargetAsync)

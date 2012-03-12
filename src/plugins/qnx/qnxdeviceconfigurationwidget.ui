@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Qnx::Internal::QnxDeviceConfigurationWidget</class>
+ <widget class="QWidget" name="Qnx::Internal::QnxDeviceConfigurationWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>328</width>
+    <height>123</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+   </property>
+   <property name="margin">
+    <number>0</number>
+   </property>
+   <item row="0" column="0">
+    <widget class="QLabel" name="hostNameLabel">
+     <property name="text">
+      <string>&amp;Device name:</string>
+     </property>
+     <property name="buddy">
+      <cstring>hostLineEdit</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QLineEdit" name="hostLineEdit">
+     <property name="placeholderText">
+      <string>IP or host name of the device</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="passwordLabel">
+     <property name="text">
+      <string>Device &amp;password</string>
+     </property>
+     <property name="buddy">
+      <cstring>pwdLineEdit</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <item>
+      <widget class="QLineEdit" name="pwdLineEdit">
+       <property name="echoMode">
+        <enum>QLineEdit::Password</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="showPasswordCheckBox">
+       <property name="text">
+        <string>Show password</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="debugTokenLabel">
+     <property name="text">
+      <string>Debug token:</string>
+     </property>
+     <property name="buddy">
+      <cstring>debugToken</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="Utils::PathChooser" name="debugToken" native="true"/>
+   </item>
+   <item row="5" column="0">
+    <widget class="QLabel" name="keyLabel">
+     <property name="text">
+      <string>Private key file:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_8">
+     <item>
+      <widget class="Utils::PathChooser" name="keyFileLineEdit" native="true"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="makeKeyFileDefaultButton">
+       <property name="text">
+        <string>Set as Default</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+  <zorder>hostNameLabel</zorder>
+  <zorder>hostLineEdit</zorder>
+  <zorder>passwordLabel</zorder>
+  <zorder>keyLabel</zorder>
+  <zorder>debugTokenLabel</zorder>
+  <zorder>debugToken</zorder>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Utils::PathChooser</class>
+   <extends>QWidget</extends>
+   <header location="global">utils/pathchooser.h</header>
+   <container>1</container>
+   <slots>
+    <signal>editingFinished()</signal>
+    <signal>browsingFinished()</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

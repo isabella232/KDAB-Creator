@@ -170,9 +170,7 @@ CustomQt4ProjectWizard::CustomQt4ProjectWizard(const Core::BaseFileWizardParamet
     BaseQt4ProjectWizardDialog *wizard = new BaseQt4ProjectWizardDialog(false, parent, wizardDialogParameters);
 
     initProjectWizardDialog(wizard, wizardDialogParameters.defaultPath(), wizardDialogParameters.extensionPages());
-    if (wizard->pageIds().contains(targetPageId))
-        qWarning("CustomQt4ProjectWizard: Unable to insert target page at %d", int(targetPageId));
-    wizard->addTargetSetupPage(QSet<QString>(), false, targetPageId);
+    wizard->addTargetSetupPage(QSet<QString>());
     return wizard;
 }
 

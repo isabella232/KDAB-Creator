@@ -105,9 +105,6 @@ public:
 
 protected:
     virtual bool postGenerateFiles(const QWizard *, const Core::GeneratedFiles &l, QString *errorMessage);
-
-private:
-    enum { targetPageId = 2 };
 };
 
 /* BaseQt4ProjectWizardDialog: Additionally offers modules page

@@ -165,11 +165,17 @@ void RemoteGdbServerAdapter::setupInferior()
     QTC_ASSERT(state() == InferiorSetupRequested, qDebug() << state());
     const DebuggerStartParameters &sp = startParameters();
 
-    QString fileName;
+    QString executableFileName;
     if (!sp.executable.isEmpty()) {
         QFileInfo fi(sp.executable);
-        fileName = fi.absoluteFilePath();
+        executableFileName = fi.absoluteFilePath();
     }
+    QString symbolFileName;
+    if (!sp.symbolFileName.isEmpty()) {
+        QFileInfo fi(sp.symbolFileName);
+        symbolFileName = fi.absoluteFilePath();
+    }
+
     const QByteArray sysroot = sp.sysroot.toLocal8Bit();
     const QByteArray remoteArch = sp.remoteArchitecture.toLatin1();
     const QByteArray gnuTarget = sp.gnuTarget.toLatin1();
@@ -209,15 +215,22 @@ void RemoteGdbServerAdapter::setupInferior()
     if (debuggerCore()->boolSetting(TargetAsync))
         m_engine->postCommand("set target-async on", CB(handleSetTargetAsync));
 
-    if (fileName.isEmpty()) {
+    if (executableFileName.isEmpty() && symbolFileName.isEmpty()) {
         showMessage(tr("No symbol file given."), StatusBar);
         callTargetRemote();
         return;
     }
 
-    m_engine->postCommand("-file-exec-and-symbols \""
-        + fileName.toLocal8Bit() + '"',
-        CB(handleFileExecAndSymbols));
+    if (!symbolFileName.isEmpty()) {
+        m_engine->postCommand("-file-symbol-file \""
+                              + symbolFileName.toLocal8Bit() + '"',
+                              CB(handleFileExecAndSymbols));
+    }
+    if (!executableFileName.isEmpty()) {
+        m_engine->postCommand("-file-exec-and-symbols \""
+            + executableFileName.toLocal8Bit() + '"',
+            CB(handleFileExecAndSymbols));
+    }
 }
 
 void RemoteGdbServerAdapter::handleSetTargetAsync(const GdbResponse &response)
@@ -282,7 +295,7 @@ void RemoteGdbServerAdapter::handleTargetQnx(const GdbResponse &response)
         showMessage(_("INFERIOR STARTED"));
         showMessage(msgAttachedToStoppedInferior(), StatusBar);
 
-        const qint64 pid = startParameters().attachPID;
+        const qint64 pid = m_engine->isMasterEngine() ? startParameters().attachPID : m_engine->masterEngine()->startParameters().attachPID;
         if (pid > -1) {
             m_engine->postCommand("attach " + QByteArray::number(pid), CB(handleAttach));
         } else {
@@ -322,8 +335,31 @@ void RemoteGdbServerAdapter::handleAttach(const GdbResponse &response)
 void RemoteGdbServerAdapter::runEngine()
 {
     QTC_ASSERT(state() == EngineRunRequested, qDebug() << state());
-    m_engine->notifyEngineRunAndInferiorStopOk();
-    m_engine->continueInferiorInternal();
+
+    const QString remoteExecutable = startParameters().remoteExecutable;
+    if (!remoteExecutable.isEmpty()) {
+        m_engine->postCommand("-exec-run " + remoteExecutable.toLocal8Bit(), GdbEngine::RunRequest, CB(handleExecRun));
+    } else {
+        m_engine->notifyEngineRunAndInferiorStopOk();
+        m_engine->continueInferiorInternal();
+    }
+}
+
+void RemoteGdbServerAdapter::handleExecRun(const GdbResponse &response)
+{
+    QTC_ASSERT(state() == EngineRunRequested, qDebug() << state());
+    if (response.resultClass == GdbResultRunning) {
+        m_engine->notifyEngineRunAndInferiorRunOk();
+        showMessage(_("INFERIOR STARTED"));
+        showMessage(msgInferiorSetupOk(), StatusBar);
+        // FIXME: That's the wrong place for it.
+        if (debuggerCore()->boolSetting(EnableReverseDebugging))
+            m_engine->postCommand("target record");
+    } else {
+        QString msg = QString::fromLocal8Bit(response.data.findChild("msg").data());
+        showMessage(msg);
+        m_engine->notifyEngineRunFailed();
+    }
 }
 
 void RemoteGdbServerAdapter::interruptInferior()
@@ -357,7 +393,8 @@ void RemoteGdbServerAdapter::handleInterruptInferior(const GdbResponse &response
 
 void RemoteGdbServerAdapter::shutdownInferior()
 {
-    if (m_engine->startParameters().startMode == AttachToRemoteServer)
+    if (m_engine->startParameters().startMode == AttachToRemoteServer
+            && m_engine->startParameters().remoteExecutable.isEmpty())
         m_engine->defaultInferiorShutdown("detach");
     else
         m_engine->defaultInferiorShutdown("kill");

@@ -53,6 +53,7 @@ class RemoteLinuxUsedPortsGathererPrivate
     QByteArray remoteStdout;
     QByteArray remoteStderr;
     bool running; // TODO: Redundant due to being in sync with procRunner?
+    QString command;
 };
 
 } // namespace Internal
@@ -84,18 +85,21 @@ void RemoteLinuxUsedPortsGatherer::start(const Utils::SshConnection::Ptr &connec
         SLOT(handleRemoteStdOut(QByteArray)));
     connect(&d->procRunner, SIGNAL(processErrorOutputAvailable(QByteArray)),
         SLOT(handleRemoteStdErr(QByteArray)));
-    QString procFilePath;
-    int addressLength;
-    if (connection->connectionInfo().localAddress.protocol() == QAbstractSocket::IPv4Protocol) {
-        procFilePath = QLatin1String("/proc/net/tcp");
-        addressLength = 8;
-    } else {
-        procFilePath = QLatin1String("/proc/net/tcp6");
-        addressLength = 32;
+    QString command = d->command;
+    if (command.isEmpty()) {
+        QString procFilePath;
+        int addressLength;
+        if (connection->connectionInfo().localAddress.protocol() == QAbstractSocket::IPv4Protocol) {
+            procFilePath = QLatin1String("/proc/net/tcp");
+            addressLength = 8;
+        } else {
+            procFilePath = QLatin1String("/proc/net/tcp6");
+            addressLength = 32;
+        }
+        command = QString::fromLatin1("sed "
+            "'s/.*: [[:xdigit:]]\\{%1\\}:\\([[:xdigit:]]\\{4\\}\\).*/\\1/g' %2")
+            .arg(addressLength).arg(procFilePath);
     }
-    const QString command = QString::fromLatin1("sed "
-        "'s/.*: [[:xdigit:]]\\{%1\\}:\\([[:xdigit:]]\\{4\\}\\).*/\\1/g' %2")
-        .arg(addressLength).arg(procFilePath);
 
     // TODO: We should not use an SshRemoteProcessRunner here, because we have to check
     // for the type of the connection before we can say what the exact command line is.
@@ -124,6 +128,11 @@ int RemoteLinuxUsedPortsGatherer::getNextFreePort(PortList *freePorts) const
 QList<int> RemoteLinuxUsedPortsGatherer::usedPorts() const
 {
     return d->usedPorts;
+}
+
+void RemoteLinuxUsedPortsGatherer::setCommand(const QString &command)
+{
+    d->command = command;
 }
 
 void RemoteLinuxUsedPortsGatherer::setupUsedPorts()

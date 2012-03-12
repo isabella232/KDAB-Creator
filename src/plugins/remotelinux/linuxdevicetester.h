@@ -45,6 +45,7 @@ class SshConnection;
 
 namespace RemoteLinux {
 class LinuxDeviceConfiguration;
+class RemoteLinuxUsedPortsGatherer;
 
 namespace Internal {
 class GenericLinuxDeviceTesterPrivate;
@@ -81,6 +82,7 @@ public:
     void stopTest();
 
     QSharedPointer<Utils::SshConnection> connection() const;
+    RemoteLinuxUsedPortsGatherer *usedPortsGatherer() const;
 
 private slots:
     void handleConnected();

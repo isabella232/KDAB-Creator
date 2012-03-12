@@ -45,7 +45,8 @@ SUBDIRS   = plugin_coreplugin \
             plugin_madde \
             plugin_valgrind \
             plugin_todo \
-            plugin_gammaray
+            plugin_gammaray \
+            plugin_qnx
 
 isEmpty(IDE_PACKAGE_MODE) {
     SUBDIRS += plugin_helloworld \
@@ -317,3 +318,8 @@ plugin_todo.depends += plugin_cpptools
 plugin_gammaray.subdir = gammaray
 plugin_gammaray.depends = plugin_analyzerbase
 plugin_gammaray.depends += plugin_coreplugin
+
+plugin_qnx.subdir = qnx
+plugin_qnx.depends = plugin_remotelinux
+plugin_qnx.depends += plugin_qt4projectmanager
+plugin_qnx.depends += plugin_coreplugin
